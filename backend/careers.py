@@ -284,6 +284,55 @@ def _verdict(score, career):
     return "Poor fit"
 
 
+
+def rank_careers(norm: Dict[str, float], traits: Dict[str, float]):
+    """Rank all careers for a given interest-norm + trait vector. Returns [(career, suitability)]."""
+    raw = [(c, _suitability(c, norm, traits)) for c in CAREERS]
+    raw.sort(key=lambda x: x[1], reverse=True)
+    top_raw = raw[0][1] or 1.0
+    return [(c, int(_clamp(round(52 + (r / top_raw) * 46), 38, 98))) for c, r in raw]
+
+
+def match_card(c: Dict[str, Any], suit: int) -> Dict[str, Any]:
+    return {
+        "key": c["key"], "title": c["title"], "icon": c["icon"], "tagline": c["tagline"],
+        "score": suit, "suitability": suit,
+        "market_demand": c["market_demand"], "salary_score": c["salary_score"],
+        "competition": c["competition"], "ai_risk": c["ai_risk"],
+        "ai_risk_label": ai_risk_label(c["ai_risk"]), "ai_resistance": 100 - c["ai_risk"],
+        "difficulty": c["difficulty"], "time_to_enter": c["time_to_enter"],
+        "salary": c["salary"], "salary_mid": c["salary"]["mid"], "growth": c["growth"],
+        "industries": c["industries"], "learn_next": c.get("learn_next", []),
+        "verdict": _verdict(suit, c),
+    }
+
+
+def build_avoid_from_scored(scored, limit: int = 4):
+    avoid_ranked = []
+    for c, suit in scored:
+        avoid_score = (100 - suit) * 0.45 + c["ai_risk"] * 0.30 + c["competition"] * 0.10 + (100 - c["market_demand"]) * 0.15
+        avoid_ranked.append((c, suit, avoid_score))
+    avoid_ranked.sort(key=lambda x: x[2], reverse=True)
+    out = []
+    for c, suit, _ in avoid_ranked[:limit]:
+        reasons = []
+        if c["ai_risk"] >= 60:
+            reasons.append(f"{ai_risk_label(c['ai_risk'])} — automation is shrinking this field")
+        if suit < 55:
+            reasons.append("weak alignment with your strengths")
+        if c["competition"] >= 78:
+            reasons.append("brutal competition for limited seats")
+        if c["market_demand"] <= 50:
+            reasons.append("declining market demand")
+        if not reasons:
+            reasons.append("better-aligned options exist for your profile")
+        out.append({"title": c["title"], "icon": c["icon"], "ai_risk": c["ai_risk"],
+                    "ai_risk_label": ai_risk_label(c["ai_risk"]), "competition": c["competition"],
+                    "suitability": suit, "why": reasons[:2]})
+    return out
+
+
+
 def compute_blueprint(profile: Dict[str, Any]) -> Dict[str, Any]:
     interests = profile.get("interests", {})
     pers = profile.get("personality", {})

@@ -1,4 +1,6 @@
-"""Premium light-theme PDF (indigo / purple / cyan) Career Blueprint."""
+"""Premium light-theme PDF (indigo / purple / cyan). Renders the data-driven
+typed report sections, so every category produces a distinct document.
+"""
 import io
 from typing import Dict, Any, List
 
@@ -22,21 +24,41 @@ TRACK = HexColor("#E2E8F0")
 CARD = HexColor("#F8FAFC")
 CARD_BORDER = HexColor("#E2E8F0")
 ROSE = HexColor("#E11D48")
+EMERALD = HexColor("#10B981")
+AMBER = HexColor("#F59E0B")
 WHITE = HexColor("#FFFFFF")
 
+TONES = {"indigo": INDIGO, "purple": PURPLE, "cyan": CYAN, "emerald": EMERALD,
+         "amber": AMBER, "rose": ROSE, "slate": SLATE, "danger": ROSE,
+         "warn": AMBER, "success": EMERALD, "info": INDIGO}
+
+TONE_HEX = {"indigo": "#4F46E5", "purple": "#7C3AED", "cyan": "#06B6D4", "emerald": "#10B981",
+            "amber": "#F59E0B", "rose": "#E11D48", "slate": "#475569", "danger": "#E11D48",
+            "warn": "#F59E0B", "success": "#10B981", "info": "#4F46E5"}
+
 PAGE_W, PAGE_H = A4
+
+
+def _tone(name, default=PURPLE):
+    return TONES.get(name, default)
+
+
+def _hex(name, default="#7C3AED"):
+    return TONE_HEX.get(name, default)
 
 
 def _styles():
     return {
         "kicker": ParagraphStyle("kicker", fontName="Helvetica-Bold", fontSize=9, textColor=PURPLE, leading=12, spaceAfter=3),
-        "h2": ParagraphStyle("h2", fontName="Helvetica-Bold", fontSize=20, textColor=INK, leading=24, spaceAfter=6),
+        "h2": ParagraphStyle("h2", fontName="Helvetica-Bold", fontSize=18, textColor=INK, leading=22, spaceAfter=6),
         "body": ParagraphStyle("body", fontName="Helvetica", fontSize=10.5, textColor=SLATE, leading=16),
         "bodyi": ParagraphStyle("bodyi", fontName="Helvetica-Oblique", fontSize=11, textColor=INK, leading=18),
         "small": ParagraphStyle("small", fontName="Helvetica", fontSize=9, textColor=SLATE, leading=13),
         "card_title": ParagraphStyle("card_title", fontName="Helvetica-Bold", fontSize=12.5, textColor=INK, leading=15),
         "tag": ParagraphStyle("tag", fontName="Helvetica-Bold", fontSize=8.5, textColor=INDIGO, leading=11),
-        "cover_title": ParagraphStyle("cover_title", fontName="Helvetica-Bold", fontSize=40, textColor=INK, leading=44, alignment=TA_CENTER),
+        "big": ParagraphStyle("big", fontName="Helvetica-Bold", fontSize=24, textColor=PURPLE, leading=26, alignment=TA_CENTER),
+        "biglabel": ParagraphStyle("biglabel", fontName="Helvetica", fontSize=8.5, textColor=SLATE, leading=11, alignment=TA_CENTER),
+        "cover_title": ParagraphStyle("cover_title", fontName="Helvetica-Bold", fontSize=34, textColor=INK, leading=40, alignment=TA_CENTER),
         "cover_sub": ParagraphStyle("cover_sub", fontName="Helvetica", fontSize=13, textColor=SLATE, leading=20, alignment=TA_CENTER),
     }
 
@@ -57,7 +79,7 @@ class Bar(Flowable):
             c.setFillColor(INK)
             c.setFont("Helvetica-Bold", 9.5)
             c.drawString(0, 16, self.label)
-            c.setFillColor(PURPLE)
+            c.setFillColor(self.color)
             c.drawRightString(self.width, 16, f"{int(self.value)}{self.suffix}")
         c.setFillColor(TRACK)
         c.roundRect(0, 0, self.width, 7, 3.5, fill=1, stroke=0)
@@ -89,7 +111,6 @@ def _cover_bg(canvas, doc):
     canvas.setStrokeColor(PURPLE)
     canvas.setLineWidth(1.5)
     canvas.rect(14 * mm, 14 * mm, PAGE_W - 28 * mm, PAGE_H - 28 * mm, fill=0, stroke=1)
-    # color band
     band = (PAGE_W - 28 * mm) / 3
     canvas.setFillColor(INDIGO)
     canvas.rect(14 * mm, PAGE_H - 17 * mm, band, 3 * mm, fill=1, stroke=0)
@@ -112,12 +133,108 @@ def _card(inner, width, pad=10, bg=CARD, border=CARD_BORDER):
     return t
 
 
+def _section_block(e, s, st, cw):
+    stype = s.get("type")
+    title = s.get("title", "")
+    if title:
+        e.append(Paragraph(title, st["h2"]))
+        e.append(Spacer(1, 2 * mm))
+
+    if stype in ("intro",):
+        e.append(Paragraph(s.get("text", ""), st["body"]))
+
+    elif stype == "letter":
+        letter = (s.get("text", "")).replace("\n", "<br/>")
+        e.append(_card([Paragraph(letter, st["bodyi"])], cw, pad=16, bg=HexColor("#EEF2FF"), border=HexColor("#C7D2FE")))
+
+    elif stype == "callout":
+        col = _tone(s.get("tone"), INDIGO)
+        inner = [Paragraph(f"<font color='{_hex(s.get('tone'))}'><b>{s.get('label','')}</b></font>", st["card_title"]),
+                 Spacer(1, 2), Paragraph(s.get("text", ""), st["body"])]
+        e.append(_card(inner, cw, bg=HexColor("#F8FAFC"), border=col))
+
+    elif stype == "scorecards":
+        items = s.get("items", [])
+        cells = []
+        for it in items:
+            val = it.get("value")
+            vtxt = f"{val}{it.get('suffix','')}" if val is not None else "—"
+            col = _tone(it.get("tone"), PURPLE)
+            big = ParagraphStyle("b", parent=st["big"], textColor=col)
+            cells.append([Paragraph(vtxt, big), Paragraph(it.get("label", ""), st["biglabel"]),
+                          Paragraph(it.get("caption", ""), st["biglabel"])])
+        col_w = cw / max(1, len(cells))
+        tbl_cells = [[Table([[c[0]], [c[1]], [c[2]]], colWidths=[col_w - 8]) for c in cells]]
+        t = Table(tbl_cells, colWidths=[col_w] * len(cells))
+        t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), CARD), ("BOX", (0, 0), (-1, -1), 0.6, CARD_BORDER),
+                               ("INNERGRID", (0, 0), (-1, -1), 0.6, WHITE), ("TOPPADDING", (0, 0), (-1, -1), 10),
+                               ("BOTTOMPADDING", (0, 0), (-1, -1), 10)]))
+        e.append(t)
+
+    elif stype == "bars":
+        for it in s.get("items", []):
+            e.append(Bar(it.get("value", 0), width=cw, label=it.get("label", ""), suffix=it.get("suffix", "%"), color=_tone(it.get("tone"), PURPLE)))
+            e.append(Spacer(1, 4 * mm))
+
+    elif stype == "matches":
+        for m in s.get("items", []):
+            head = Table([[Paragraph(m["title"], st["card_title"]), Paragraph(f"<b>{m['score']}%</b> fit", st["tag"])]], colWidths=[cw - 80, 60])
+            head.setStyle(TableStyle([("ALIGN", (1, 0), (1, 0), "RIGHT"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+            inner = [head, Spacer(1, 3), Paragraph(f"<i>{m.get('verdict','')}</i> · {m.get('time_to_enter','')} to enter", st["small"]), Spacer(1, 4),
+                     Bar(m["market_demand"], width=cw - 24, label="Market Demand", color=INDIGO), Spacer(1, 3),
+                     Bar(m["salary_score"], width=cw - 24, label="Salary Score", color=CYAN), Spacer(1, 3),
+                     Bar(m["ai_risk"], width=cw - 24, label=f"AI Risk ({m['ai_risk_label']})", color=PURPLE)]
+            e.append(_card(inner, cw))
+            e.append(Spacer(1, 4 * mm))
+
+    elif stype in ("list", "tags"):
+        if s.get("intro"):
+            e.append(Paragraph(s["intro"], st["body"]))
+            e.append(Spacer(1, 2 * mm))
+        for it in s.get("items", []):
+            e.append(Paragraph(f"&bull;&nbsp;&nbsp;{it}", st["body"]))
+            e.append(Spacer(1, 1.5 * mm))
+
+    elif stype == "cards":
+        for it in s.get("items", []):
+            parts = [Paragraph(it.get("title", ""), st["card_title"])]
+            badges = it.get("badges", [])
+            if badges:
+                parts.append(Paragraph(" · ".join(f"<font color='{_hex(b.get('tone'))}'>{b.get('text','')}</font>" for b in badges), st["tag"]))
+            if it.get("body"):
+                parts.append(Spacer(1, 2))
+                parts.append(Paragraph(it["body"], st["small"]))
+            for pt in it.get("points", []):
+                parts.append(Paragraph(f"&bull;&nbsp;{pt}", st["small"]))
+            e.append(_card(parts, cw))
+            e.append(Spacer(1, 3 * mm))
+
+    elif stype == "roadmap":
+        for ph in s.get("items", []):
+            parts = [Paragraph(f"<font color='#4F46E5'><b>{ph.get('phase','')}</b></font>" + (f" — {ph['focus']}" if ph.get("focus") else ""), st["card_title"]), Spacer(1, 2)]
+            for pt in ph.get("points", []):
+                parts.append(Paragraph(f"&bull;&nbsp;{pt}", st["small"]))
+            if ph.get("meta"):
+                parts.append(Paragraph(ph["meta"], st["tag"]))
+            e.append(_card(parts, cw))
+            e.append(Spacer(1, 3 * mm))
+
+    elif stype == "salary_chart":
+        for pt in s.get("points", []):
+            e.append(Bar(min(100, pt["value"]), width=cw, label=f"{pt['label']} — ₹{pt['value']} LPA", suffix="", color=CYAN))
+            e.append(Spacer(1, 4 * mm))
+        if s.get("note"):
+            e.append(Paragraph(s["note"], st["small"]))
+
+    e.append(Spacer(1, 6 * mm))
+
+
 def build_pdf(submission: Dict[str, Any]) -> bytes:
     st = _styles()
     r = submission["report"]
-    name = submission.get("name", "Student")
-    is_pro = submission.get("plan", "student") == "professional"
-    cw = None
+    name = submission.get("name", "You")
+    product = r.get("product_name", "Career Blueprint")
+    headline = r.get("headline", "Your Career Truth Report")
     buf = io.BytesIO()
 
     doc = BaseDocTemplate(buf, pagesize=A4, leftMargin=20 * mm, rightMargin=20 * mm,
@@ -131,195 +248,22 @@ def build_pdf(submission: Dict[str, Any]) -> bytes:
     ])
 
     e: List[Any] = []
-
-    # COVER
-    e.append(Spacer(1, 68 * mm))
+    e.append(Spacer(1, 60 * mm))
     e.append(Paragraph("CAREER BLUEPRINT AI", st["kicker"]))
     e.append(Spacer(1, 4 * mm))
-    e.append(Paragraph("Your Career<br/>Truth Report", st["cover_title"]))
+    e.append(Paragraph(product, st["cover_title"]))
+    e.append(Spacer(1, 8 * mm))
+    e.append(Paragraph(headline, st["cover_sub"]))
     e.append(Spacer(1, 8 * mm))
     e.append(Paragraph(f"Prepared for <b>{name}</b>  ·  {r.get('user_type','')}", st["cover_sub"]))
-    e.append(Spacer(1, 10 * mm))
-    e.append(Paragraph(f"Success Score {r['success_score']}%   ·   AI Resistance {r['ai_resistance_score']}%", st["cover_sub"]))
     e.append(NextPageTemplate("main"))
     e.append(PageBreak())
 
-    def chapter(num, title):
-        e.append(Paragraph(f"CHAPTER {num}", st["kicker"]))
-        e.append(Paragraph(title, st["h2"]))
-        e.append(Spacer(1, 3 * mm))
-
-    # CH1
-    chapter(1, "Career Reality Check")
-    e.append(Paragraph(r.get("career_reality_check", ""), st["body"]))
-    e.append(Spacer(1, 5 * mm))
-    traits = [Paragraph(f"<b>{t}</b>", st["small"]) for t in r.get("trait_labels", [])]
-    if traits:
-        tt = Table([traits[:3], traits[3:] + [Paragraph("", st["small"])] * (3 - len(traits[3:]))], colWidths=[cw / 3.0] * 3)
-        tt.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), CARD), ("BOX", (0, 0), (-1, -1), 0.6, CARD_BORDER),
-                                ("INNERGRID", (0, 0), (-1, -1), 0.6, WHITE), ("TOPPADDING", (0, 0), (-1, -1), 7),
-                                ("BOTTOMPADDING", (0, 0), (-1, -1), 7), ("LEFTPADDING", (0, 0), (-1, -1), 8)]))
-        e.append(tt)
-    e.append(PageBreak())
-
-    # CH2
-    chapter(2, "Strengths & Weaknesses")
-    e.append(Paragraph("Your Strengths", st["card_title"]))
-    e.append(Spacer(1, 2 * mm))
-    for s in r.get("strengths", []):
-        e.append(Paragraph(f"<b>{s.get('label','')}</b> — {s.get('description','')}", st["body"]))
-        e.append(Spacer(1, 2 * mm))
-    e.append(Spacer(1, 3 * mm))
-    e.append(Paragraph("Your Weaknesses (the honest part)", st["card_title"]))
-    e.append(Spacer(1, 2 * mm))
-    for w in r.get("weaknesses", []):
-        e.append(Paragraph(f"<font color='#E11D48'><b>{w.get('title','')}</b></font> — {w.get('description','')}", st["body"]))
-        e.append(Spacer(1, 2 * mm))
-    e.append(PageBreak())
-
-    # CH3
-    chapter(3, "Top 5 Career Matches")
-    expl = r.get("match_explanations", {})
-    for m in r["matches"]:
-        rows = [
-            [Paragraph(m["title"], st["card_title"]), Paragraph(f"<b>{m['score']}%</b> fit", st["tag"])],
-        ]
-        head = Table(rows, colWidths=[cw - 80, 60])
-        head.setStyle(TableStyle([("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                                  ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
-                                  ("ALIGN", (1, 0), (1, 0), "RIGHT")]))
-        inner = [head, Spacer(1, 3),
-                 Paragraph(f"<i>{m['verdict']}</i> · {m['time_to_enter']} to enter", st["small"]),
-                 Spacer(1, 4),
-                 Bar(m["market_demand"], width=cw - 24, label="Market Demand", color=INDIGO), Spacer(1, 3),
-                 Bar(m["salary_score"], width=cw - 24, label="Salary Score", color=CYAN), Spacer(1, 3),
-                 Bar(m["competition"], width=cw - 24, label="Competition", color=ROSE), Spacer(1, 3),
-                 Bar(m["ai_risk"], width=cw - 24, label=f"AI Risk ({m['ai_risk_label']})", color=PURPLE), Spacer(1, 4),
-                 Paragraph(expl.get(m["key"], m.get("tagline", "")), st["small"])]
-        e.append(_card(inner, cw))
-        e.append(Spacer(1, 4 * mm))
-    e.append(PageBreak())
-
-    # CH4
-    chapter(4, "Careers To Avoid")
-    e.append(Paragraph("Based on your profile, these paths are a poor bet — admiring a field isn't the same as being built for it.", st["body"]))
-    e.append(Spacer(1, 4 * mm))
-    for a in r.get("careers_to_avoid", []):
-        inner = [Paragraph(f"<font color='#E11D48'><b>{a['title']}</b></font>  ·  {a['ai_risk_label']}", st["card_title"]),
-                 Spacer(1, 2), Paragraph("Why: " + "; ".join(a.get("why", [])), st["small"])]
-        e.append(_card(inner, cw, bg=HexColor("#FFF1F2"), border=HexColor("#FECDD3")))
-        e.append(Spacer(1, 3 * mm))
-    e.append(Paragraph(r.get("careers_to_avoid_note", ""), st["body"]))
-    e.append(PageBreak())
-
-    # CH5 + CH6
-    chapter(5, "Industry Analysis")
-    inds = r.get("industries", [])
-    if inds:
-        rows, row = [], []
-        for ind in inds:
-            row.append(Paragraph(f"<b>{ind}</b>", st["small"]))
-            if len(row) == 2:
-                rows.append(row)
-                row = []
-        if row:
-            row.append(Paragraph("", st["small"]))
-            rows.append(row)
-        it = Table(rows, colWidths=[cw / 2.0] * 2)
-        it.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), CARD), ("BOX", (0, 0), (-1, -1), 0.6, CARD_BORDER),
-                                ("INNERGRID", (0, 0), (-1, -1), 0.6, WHITE), ("TOPPADDING", (0, 0), (-1, -1), 10),
-                                ("BOTTOMPADDING", (0, 0), (-1, -1), 10), ("LEFTPADDING", (0, 0), (-1, -1), 10)]))
-        e.append(it)
-    e.append(Spacer(1, 6 * mm))
-    chapter(6, "AI Threat Assessment")
-    e.append(Paragraph(f"Portfolio AI exposure: <b>{r['portfolio_ai_risk']}% ({r['ai_risk_label']})</b>.", st["body"]))
-    e.append(Spacer(1, 3 * mm))
-    for m in r["matches"]:
-        e.append(Bar(m["ai_risk"], width=cw, label=f"{m['title']} — {m['ai_risk_label']}", color=PURPLE))
-        e.append(Spacer(1, 3.5 * mm))
-    e.append(Spacer(1, 2 * mm))
-    e.append(Paragraph(r.get("ai_threat_summary", ""), st["body"]))
-    e.append(PageBreak())
-
-    # CH7
-    chapter(7, "Income Projection")
-    sp = r["salary_projection"]
-    for label, key in [("Year 1 (Entry)", "year1"), ("Year 3", "year3"), ("Year 5", "year5"), ("Year 10 (Senior)", "year10")]:
-        e.append(Bar(min(100, sp[key]), width=cw, label=f"{label} — ₹{sp[key]} LPA", suffix="", color=CYAN))
-        e.append(Spacer(1, 5 * mm))
-    e.append(Spacer(1, 2 * mm))
-    if is_pro:
-        for lab, v in [("Leadership Potential", r["leadership_potential"]), ("Business Potential", r["business_potential"]), ("Personal Growth", r["personal_growth"])]:
-            e.append(Bar(v, width=cw, label=lab, color=INDIGO))
-            e.append(Spacer(1, 4 * mm))
-    e.append(PageBreak())
-
-    # CH8 + CH9 (Professional only)
-    if is_pro:
-        chapter(8, "Entrepreneurship Potential")
-        e.append(Bar(r["business_potential"], width=cw, label="Business Potential", color=PURPLE))
-        e.append(Spacer(1, 4 * mm))
-        e.append(Paragraph(r.get("entrepreneurship", ""), st["body"]))
-        e.append(Spacer(1, 6 * mm))
-        chapter(9, "Career Switch Opportunities")
-        for tgt in r.get("career_switch", {}).get("targets", [])[:4]:
-            inner = [Paragraph(f"<b>{tgt['title']}</b>", st["card_title"]), Spacer(1, 2),
-                     Paragraph(f"Difficulty: {tgt['difficulty']} · Time: {tgt['time_required']} · Impact: {tgt['salary_impact']} · Success: {tgt['success_probability']}", st["small"]),
-                     Spacer(1, 2), Paragraph("Skill gaps: " + ", ".join(tgt.get("skill_gaps", [])), st["small"])]
-            e.append(_card(inner, cw))
-            e.append(Spacer(1, 3 * mm))
-        e.append(PageBreak())
-
-    # CH10 + CH11
-    chapter(10, "Skill Gap Analysis")
-    e.append(Paragraph("What to learn next for your #1 path:", st["body"]))
-    e.append(Spacer(1, 2 * mm))
-    e.append(Paragraph("• " + "<br/>• ".join(r.get("learn_next", [])), st["body"]))
-    e.append(Spacer(1, 6 * mm))
-    chapter(11, "Learning Roadmap")
-    for ph in r.get("learning_plans", []):
-        inner = [Paragraph(f"<font color='#4F46E5'><b>{ph['phase']}</b></font> — {ph['focus']}", st["card_title"]),
-                 Spacer(1, 2), Paragraph("• " + "  • ".join(ph.get("items", [])), st["small"]),
-                 Spacer(1, 2), Paragraph(f"Target: {ph.get('expected_salary','')} · Success: {ph.get('success_probability','')}", st["tag"])]
-        e.append(_card(inner, cw))
-        e.append(Spacer(1, 3 * mm))
-    e.append(PageBreak())
-
-    # CH12 + CH13 (Professional only)
-    if is_pro:
-        chapter(12, "Resume & LinkedIn Strategy")
-        e.append(Paragraph(r.get("resume_linkedin", ""), st["body"]))
-        e.append(Spacer(1, 6 * mm))
-        chapter(13, "Interview Readiness")
-        e.append(Paragraph(r.get("interview_readiness", ""), st["body"]))
-
-    # CH14 (layoff) — professional only
-    layoff = r.get("layoff")
-    if is_pro and layoff:
-        e.append(PageBreak())
-        chapter(14, "Layoff Recovery Plan")
-        for lab, v in [("Layoff Risk", layoff["layoff_risk_score"]), ("Recovery Score", layoff["recovery_score"]),
-                     ("Employability", layoff["employability_score"]), ("Salary Recovery", layoff["salary_recovery_potential"])]:
-            color = ROSE if lab == "Layoff Risk" else INDIGO
-            e.append(Bar(v, width=cw, label=lab, color=color))
-            e.append(Spacer(1, 4 * mm))
-        for phase, items in layoff.get("recovery_roadmap", {}).items():
-            inner = [Paragraph(f"<b>{phase}</b>", st["card_title"]), Spacer(1, 2),
-                     Paragraph("• " + "<br/>• ".join(items), st["small"])]
-            e.append(_card(inner, cw))
-            e.append(Spacer(1, 3 * mm))
-
-    e.append(PageBreak())
-    # CH15
-    chapter(15, "Future Industry Predictions")
-    for fi in r.get("future_industries", []):
-        e.append(Paragraph(f"• {fi}", st["body"]))
-        e.append(Spacer(1, 2 * mm))
-    e.append(Spacer(1, 6 * mm))
-    # CH16
-    chapter(16, "A Letter From Your Future Self")
-    letter = r.get("future_self_letter", "").replace("\n", "<br/>")
-    e.append(_card([Paragraph(letter, st["bodyi"])], cw, pad=16, bg=HexColor("#EEF2FF"), border=HexColor("#C7D2FE")))
+    for i, s in enumerate(r.get("sections", [])):
+        _section_block(e, s, st, cw)
+        # light pacing: page break after heavy sections
+        if s.get("type") in ("matches", "roadmap") and i < len(r["sections"]) - 1:
+            e.append(PageBreak())
 
     doc.build(e)
     return buf.getvalue()
@@ -359,15 +303,15 @@ def build_addon_pdf(submission: Dict[str, Any], component_id: str) -> bytes:
                        bg=HexColor("#EEF2FF"), border=HexColor("#C7D2FE")))
         e.append(Spacer(1, 6 * mm))
 
-    for sec in content.get("sections", []):
-        e.append(Paragraph(sec.get("heading", ""), st["h2"]))
+    for sct in content.get("sections", []):
+        e.append(Paragraph(sct.get("heading", ""), st["h2"]))
         e.append(Spacer(1, 2 * mm))
-        if sec.get("type") == "list":
-            for it in sec.get("items", []):
+        if sct.get("type") == "list":
+            for it in sct.get("items", []):
                 e.append(Paragraph(f"&bull;&nbsp;&nbsp;{it}", st["body"]))
                 e.append(Spacer(1, 1.5 * mm))
         else:
-            e.append(Paragraph(sec.get("text", ""), st["body"]))
+            e.append(Paragraph(sct.get("text", ""), st["body"]))
         e.append(Spacer(1, 6 * mm))
 
     doc.build(e)

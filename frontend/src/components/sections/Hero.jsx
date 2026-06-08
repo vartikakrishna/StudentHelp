@@ -100,15 +100,15 @@ export const Hero = ({ onStart }) => (
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}
           className="font-head font-800 tracking-tight leading-[1.05] text-4xl sm:text-5xl lg:text-6xl text-slate-900"
         >
-          Most People Waste Years Following The <span className="text-gradient">Wrong Career Path.</span>
+          Don&apos;t Spend 4 Years Preparing For The <span className="text-gradient">Wrong Career.</span>
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25 }}
           className="mt-6 text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed"
         >
-          Discover where your strengths, personality, market demand, AI trends and income
-          potential truly align — a brutally honest career truth report, not a motivation test.
+          AI analyzes your strengths, career fit, salary potential, future demand and AI
+          disruption risk to build your personalized career roadmap — a brutally honest truth report, not a motivation test.
         </motion.p>
 
         <motion.div

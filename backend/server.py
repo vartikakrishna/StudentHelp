@@ -14,9 +14,8 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Any
 from datetime import datetime, timezone
 
-from careers import compute_blueprint
-from engines import build_engines, build_regret
-from ai_engine import enhance_report
+from type_engines import analyze_profile
+from ai_engine import enhance
 from pdf_generator import build_pdf, build_addon_pdf
 from addons import ADDON_CATALOG, expand_addons, addon_total, build_addon_content, normalize_ids
 
@@ -52,72 +51,14 @@ logger = logging.getLogger(__name__)
 
 
 # ----------------------- Models -----------------------
-class Interests(BaseModel):
-    technology: int = 5
-    business: int = 5
-    finance: int = 5
-    sales: int = 5
-    marketing: int = 5
-    design: int = 5
-    writing: int = 5
-    teaching: int = 5
-    research: int = 5
-    psychology: int = 5
-    healthcare: int = 5
-    law: int = 5
-    content_creation: int = 5
-    entrepreneurship: int = 5
-    leadership: int = 5
-    problem_solving: int = 5
-
-
-class Personality(BaseModel):
-    mind: str = "introvert"
-    approach: str = "analytical"
-    risk: str = "stable"
-    role: str = "specialist"
-    work_style: str = "independent"
-    stress_tolerance: int = 5
-    work_life: int = 5
-    communication: int = 5
-    public_speaking: int = 5
-
-
-class Goals(BaseModel):
-    priorities: List[str] = Field(default_factory=list)
-    dream_income_30: str = ""
-    dream_income_40: str = ""
-    challenge: str = ""
-
-
 class AnalyzeRequest(BaseModel):
     name: str
     email: str
     phone: Optional[str] = ""
-    age: Optional[str] = ""
-    gender: Optional[str] = ""
-    country: Optional[str] = ""
-    state: Optional[str] = ""
-    user_type: Optional[str] = "Student"
-    education: Optional[str] = ""
-    current_degree: Optional[str] = ""
-    current_profession: Optional[str] = ""
-    graduation_year: Optional[str] = ""
-    current_salary: Optional[str] = ""
-    expected_salary: Optional[str] = ""
-    # professional / layoff (optional)
-    job_title: Optional[str] = ""
-    years_experience: Optional[str] = ""
-    industry: Optional[str] = ""
-    previous_salary: Optional[str] = ""
-    reason_for_layoff: Optional[str] = ""
-    skills: Optional[str] = ""
-    certifications: Optional[str] = ""
-    desired_industry: Optional[str] = ""
-    remote_preference: Optional[str] = ""
-    interests: Interests
-    personality: Personality
-    goals: Goals
+    country: Optional[str] = "India"
+    user_type: str = "Student"
+    answers: Dict[str, Any] = Field(default_factory=dict)
+    personality: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OrderRequest(BaseModel):
@@ -151,36 +92,20 @@ class RegretRequest(BaseModel):
 
 
 # ----------------------- Helpers -----------------------
-def build_preview(report: Dict[str, Any]) -> Dict[str, Any]:
-    top3 = []
-    for m in report["matches"][:3]:
-        top3.append({
-            "title": m["title"], "icon": m["icon"], "score": m["score"], "tagline": m["tagline"],
-            "ai_risk": m["ai_risk"], "ai_risk_label": m["ai_risk_label"], "ai_resistance": m["ai_resistance"],
-            "market_demand": m["market_demand"], "salary_mid": m["salary"]["mid"], "growth": m["growth"],
-            "verdict": m["verdict"], "explanation": report.get("match_explanations", {}).get(m["key"], m["tagline"]),
-        })
-    return {
-        "user_type": report.get("user_type"),
-        "success_score": report["success_score"],
-        "ai_resistance_score": report["ai_resistance_score"],
-        "portfolio_ai_risk": report["portfolio_ai_risk"],
-        "ai_risk_label": report["ai_risk_label"],
-        "top_matches": top3,
-        "career_reality_check": report.get("career_reality_check", ""),
-        "strength": (report.get("strength_scores") or [{}])[0],
-        "weakness": report.get("weakness", {}),
-        "hidden_talent": report.get("hidden_talent", {}),
-        "trait_labels": report.get("trait_labels", []),
-        "ai_threat_examples": report.get("ai_threat_examples", []),
-        "locked": {
-            "leadership_potential": report["leadership_potential"],
-            "business_potential": report["business_potential"],
-            "personal_growth": report["personal_growth"],
-            "salary_year10": report["salary_projection"]["year10"],
-            "careers_to_avoid_count": len(report.get("careers_to_avoid", [])),
-        },
-    }
+def regret_calc(age, current_salary, dream_salary):
+    cur = num_or(current_salary)
+    dream = num_or(dream_salary)
+    a = num_or(age) or 22
+    years = max(10, min(30, round(50 - a)))
+    yearly_gap = max((dream - cur) * 0.6, dream * 0.25, 2)
+    return {"opportunity_cost": round(yearly_gap * years), "years": years, "yearly_gap": round(yearly_gap, 1)}
+
+
+def num_or(v, default=0.0):
+    try:
+        return float(str(v).replace(",", "").strip())
+    except (TypeError, ValueError):
+        return default
 
 
 # ----------------------- Routes -----------------------
@@ -191,41 +116,30 @@ async def root():
 
 @api_router.post("/regret")
 async def regret(req: RegretRequest):
-    cur = float(req.current_salary or 0) if str(req.current_salary).replace('.', '').isdigit() else 0
-    dream = float(req.dream_salary or 0) if str(req.dream_salary).replace('.', '').isdigit() else 0
-    age = float(req.age or 22) if str(req.age).replace('.', '').isdigit() else 22
-    years = max(10, min(30, round(50 - age)))
-    yearly_gap = max((dream - cur) * 0.6, dream * 0.25, 2)
-    return {"opportunity_cost": round(yearly_gap * years), "years": years,
-            "yearly_gap": round(yearly_gap, 1)}
+    return regret_calc(req.age, req.current_salary, req.dream_salary)
 
 
 @api_router.post("/analyze")
 async def analyze(req: AnalyzeRequest):
     profile = req.model_dump()
-    blueprint = compute_blueprint(profile)
-    enhanced = await enhance_report(profile, blueprint)
-    blueprint.update(enhanced)
-    blueprint.update(build_engines(profile, blueprint))
+    report = analyze_profile(profile)
+    report = await enhance(profile, report)
 
     plan, amount = plan_for(req.user_type)
     sub_id = str(uuid.uuid4())
     doc = {
         "id": sub_id, "name": req.name, "email": req.email, "phone": req.phone,
-        "age": req.age, "gender": req.gender, "country": req.country, "state": req.state,
-        "user_type": req.user_type, "education": req.education, "current_degree": req.current_degree,
-        "current_profession": req.current_profession, "current_salary": req.current_salary,
-        "expected_salary": req.expected_salary,
-        "interests": profile["interests"], "personality": profile["personality"], "goals": profile["goals"],
-        "professional": {k: profile.get(k) for k in ["job_title", "years_experience", "industry", "previous_salary",
-                                                      "reason_for_layoff", "skills", "certifications", "desired_industry", "remote_preference"]},
-        "report": blueprint, "paid": False, "payment_id": None, "plan": plan, "amount": amount,
+        "country": req.country, "user_type": req.user_type,
+        "answers": req.answers, "personality": req.personality,
+        "report": report, "paid": False, "payment_id": None, "plan": plan, "amount": amount,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.submissions.insert_one(doc)
     logger.info("New analysis: %s (%s) type=%s plan=%s ₹%s", req.name, sub_id, req.user_type, plan, amount)
     return {"submission_id": sub_id, "name": req.name, "email": req.email, "phone": req.phone,
-            "plan": plan, "price": amount, "preview": build_preview(blueprint)}
+            "plan": plan, "price": amount, "user_type": req.user_type,
+            "product_name": report.get("product_name"), "primary_goal": report.get("primary_goal"),
+            "preview": report["preview"]}
 
 
 @api_router.post("/create-order")
@@ -279,7 +193,7 @@ async def get_report(submission_id: str):
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
     if not sub.get("paid"):
-        return {"paid": False, "preview": build_preview(sub["report"]), "name": sub["name"]}
+        return {"paid": False, "preview": sub["report"]["preview"], "name": sub["name"]}
     return {"paid": True, "report": sub["report"], "name": sub["name"]}
 
 

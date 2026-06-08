@@ -1,0 +1,26 @@
+{
+  "summary": "Frontend-only end-to-end validation of the multi-category Career Blueprint AI funnel. Ran full Playwright flows for Student (₹199), IT Employee (₹499) and Working Professional (₹499) on the external REACT_APP_BACKEND_URL. All three category questionnaires render distinct steps, the category VALUE screen shows the correct per-user-type product, the preview-scores grid shows correct VISIBLE vs LOCKED scores per spec, MOCK Razorpay unlocks full-report, and the rendered report sections are clearly distinct per category. Validation errors (usertype/about/personality) trigger quiz-error correctly. Upsell regression: preview shows no upsells; after purchase the 4 cards render, resume+interview produces a ₹798 sticky checkout bar, bundle exclusivity replaces selection to ₹999, deselect clears the bar, MOCK addon payment unlocks addon-download-resume + addon-download-interview links (correct /api/report/{id}/addon/{component}/pdf hrefs) and switches cards to PURCHASED while LinkedIn remains buyable at ₹299. 100% of scripted assertions passed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ResultPreview.jsx remains the heaviest component owning preview, paywall, FullReport, payment modal and upsell selection state. Consider extracting <FullReport/>, <Upsells/>, and the addon checkout bar into separate files for maintainability (recurring observation from iteration_3/4).",
+    "Questionnaire.jsx: the catStep lookup in canNext()/render is keyed by step id but uses string compare against the dynamic steps list — works today, but consider memoizing stepsFor/metaFor to avoid recompute on every render once schemas grow.",
+    "data/questionnaires.js: 'Fresher' is mapped to STUDENT_STEPS but PROFILE_META.Fresher has product 'First-Job Readiness Report' which the backend does not have a dedicated engine for (per agent context backend bills it as student). Worth aligning frontend product copy with backend handling or hiding Fresher until Phase-2.",
+    "PaymentModal uses a single data-testid='pay-now-btn' for both the live and mock buttons (two elements). Only one is visible at a time so selectors still work, but two elements sharing one testid is a minor smell — consider 'pay-now-live-btn' vs 'pay-now-mock-btn'.",
+    "All interactive elements (chips, sliders, selects, CTAs, payment, upsell cards, download links) have proper data-testid coverage — testability is excellent."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "n/a — public funnel, no auth. MOCK Razorpay (no keys).",
+  "seed_data_creation": "Created 4 submissions via the funnel (1 Student, 1 IT Employee, 1 Working Professional, 1 Student with addon purchase). Sample addon-purchased submission_id: 359ffda4-4d96-41b4-8577-80834a05eae9.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Validated end-to-end on external URL via Playwright: (1) Validation: Continue on usertype/about/personality without input triggers data-testid=quiz-error. (2) Student: q-usertype-Student → value 'Your Career Direction Report' → about → academics (q-current_class select, q-favorite_subjects-* chips) → aspirations (q-career_interests-Software / IT chip) → personality binaries → preview-scores with Career Match & Personality Fit visible, others locked, unlock CTA shows ₹199 → MOCK pay → full-report contains report-section-{reality_check,matches,degrees,demand,ai_proof,mistakes,skills,roadmap,growth,letter}. (3) IT Employee: value 'Your AI Survival & Growth Report' → q-developer_type select, q-years_experience, q-languages-Python, q-tech_stack-Django, q-cloud_knowledge/ai_knowledge/system_design selects → preview shows AI Replacement Risk & Future Demand visible, ₹499 → report sections {threat,transitions,gaps,emerging,salary,verdict}. (4) Working Professional: value 'Your Career Growth Report' → q-current_role/industry/years_experience/current_salary/team_size/leadership_responsibilities → q-promotion_history/desired_salary/desired_position → preview shows Career Growth & Leadership Potential visible, ₹499 → report sections {readiness,salary,leadership,outlook,roadmap}. (5) Preview never shows data-testid=upsells; full-report always does. (6) Upsells: upsell-select-resume + upsell-select-interview ⇒ addon-checkout-bar '2 add-ons selected · ₹798'; upsell-select-bundle replaces selection to '1 add-on selected · ₹999'; deselect clears the bar; buy-addons-btn opens razorpay-mock-modal showing ₹798; after pay-now-btn cards swap to PURCHASED with addon-download-{component} <a> links pointing to /api/report/{id}/addon/{component}/pdf and the sticky bar disappears. LinkedIn (₹299) remains buyable. Three reports are visibly distinct in copy and section titles. No bugs found this iteration.",
+  "rca of the issue": "No bugs found."
+}
