@@ -42,6 +42,7 @@ def _summary(profile: Dict[str, Any], report: Dict[str, Any]) -> str:
     pers = profile.get("personality", {})
     return (f"Product: {report.get('product_name')}. Goal: {report.get('primary_goal')}. "
             f"User type: {report.get('user_type')}. Name: {profile.get('name')}. "
+            f"Report focus: {report.get('ai_focus', 'honest career analysis')}. "
             f"Key scores: {sline}. Top paths: {mline}. "
             f"5-yr salary est ₹{report.get('salary_projection', {}).get('year5')} LPA. "
             f"Personality: {pers.get('mind')}, {pers.get('approach')}, {pers.get('risk')}, "

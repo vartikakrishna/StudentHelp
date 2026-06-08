@@ -53,6 +53,39 @@ const PROMO_HISTORY = ["Never promoted", "1 promotion", "2-3 promotions", "Frequ
 const TEAM_SIZE = ["Just me / IC", "2-5", "6-15", "16-50", "50+"];
 const LEAD_RESP = ["None", "Lead a small team", "Manage a team", "Manage managers / dept"];
 
+// Fresher
+const GEN_SKILLS = ["Communication", "Problem solving / DSA", "Excel / Sheets", "SQL", "Python", "Git", "Data analysis", "Design", "Writing", "Marketing", "Public speaking", "Domain fundamentals"];
+const COUNT_0_3 = ["None", "1", "2", "3+"];
+const COUNT_PROJ = ["None", "1-2", "3-5", "5+"];
+const RESUME_OPTS = ["Yes, polished", "In progress", "Not yet"];
+const YESNO = ["Yes", "No"];
+const JOBPREF = ["Product / Startups", "Service / IT", "Core / Domain", "Government / PSU", "Research / Higher studies", "Open to anything"];
+// Switcher
+const LEARN_TIME = ["<5 hrs/week", "5-10 hrs/week", "10-20 hrs/week", "20+ hrs/week"];
+const RUNWAY = ["No savings", "1-3 months", "3-6 months", "6-12 months", "12+ months"];
+const SWITCH_REASON = ["Better pay", "More passion / meaning", "Industry decline", "Burnout", "Growth ceiling", "Other"];
+// Laid off
+const SAVINGS = ["No savings", "<1 month", "1-3 months", "3-6 months", "6-12 months", "12+ months"];
+const RELOCATE = ["Yes", "Maybe", "No"];
+const LAYOFF_REASON = ["Company downsizing", "Restructuring", "Performance", "Startup shutdown", "Role eliminated", "Other"];
+// Manager
+const BUDGET = ["None", "Small (<₹50L)", "Mid (₹50L-5Cr)", "Large (₹5Cr+)"];
+const HIRING = ["None", "Helped hire", "Hired independently", "Built teams"];
+const SCALE3 = ["Low", "Medium", "High"];
+// Freelancer
+const FREELANCE_SERVICES = ["Design", "Development", "Writing / Content", "Marketing", "Video / Editing", "Consulting", "Photography", "Other"];
+const CLIENTS_OPTS = ["0-1", "2-4", "5-10", "10+"];
+const PRICING = ["Budget / low", "Mid-market", "Premium"];
+const PORTFOLIO = ["Weak / none", "Okay", "Strong", "Outstanding"];
+const FREELANCE_CHANNELS = ["Referrals system", "LinkedIn content", "Cold outreach", "Niche communities", "SEO / inbound", "Marketplaces (Upwork etc.)", "Email list"];
+// Business
+const BIZ_TYPE = ["Services", "Retail / E-commerce", "SaaS / Tech", "Manufacturing", "Food & Beverage", "Agency", "Consulting", "Other"];
+const EMP_OPTS = ["Just me", "2-5", "6-20", "21-50", "50+"];
+const MARGIN = ["Loss-making", "Break-even", "Low (<10%)", "Healthy (10-25%)", "Strong (25%+)"];
+const ACQ = ["Word of mouth only", "1 main channel", "Few channels", "Diversified & systematic"];
+const BIZ_CHALLENGE = ["Getting customers", "Cash flow / margins", "Hiring & team", "Scaling operations", "Marketing", "Retention", "Founder is the bottleneck"];
+const BIZ_CHANNELS = ["Referral programme", "Paid ads", "SEO / content", "Email & retention", "Partnerships", "Social / community", "Sales team / outbound"];
+
 // ---- Personality (8 high-value traits, used as 20% scoring modifier) ----
 export const PERSONALITY_BINARY = [
   { key: "mind", question: "How do you recharge?", options: [{ value: "introvert", label: "Introvert", desc: "Quiet, deep focus" }, { value: "extrovert", label: "Extrovert", desc: "People & energy" }] },
@@ -117,14 +150,85 @@ const PRO_STEPS = [
 
 export const QUESTIONNAIRES = {
   Student: STUDENT_STEPS,
-  Fresher: STUDENT_STEPS,
+  Fresher: [
+    { id: "education", title: "Your education", subtitle: "Where you're starting from.", fields: [
+      { key: "degree", label: "Degree", type: "select", options: EDUCATION_OPTIONS, half: true },
+      { key: "graduation_year", label: "Graduation Year", type: "number", placeholder: "e.g. 2025", half: true },
+      { key: "internships", label: "Internships Done", type: "select", options: COUNT_0_3, required: true, half: true },
+      { key: "projects", label: "Projects Built", type: "select", options: COUNT_PROJ, required: true, half: true },
+      { key: "certifications", label: "Certifications", type: "text", placeholder: "e.g. Google Data Analytics", half: true },
+      { key: "skills", label: "Your Skills", type: "multiselect", options: GEN_SKILLS, required: true } ] },
+    { id: "jobreadiness", title: "Your job search", subtitle: "Be honest — this drives your employability score.", fields: [
+      { key: "resume_ready", label: "Resume Prepared?", type: "select", options: RESUME_OPTS, required: true, half: true },
+      { key: "linkedin", label: "LinkedIn Profile?", type: "select", options: YESNO, half: true },
+      { key: "expected_salary", label: "Expected Salary (₹ LPA)", type: "number", placeholder: "e.g. 6", half: true },
+      { key: "job_preference", label: "Job Preference", type: "select", options: JOBPREF, half: true } ] },
+  ],
   "IT Employee": IT_STEPS,
   "Working Professional": PRO_STEPS,
+  "Career Switcher": [
+    { id: "switch", title: "Your transition", subtitle: "From where, to where, and why.", fields: [
+      { key: "current_profession", label: "Current Profession", type: "text", placeholder: "e.g. Mechanical Engineer", required: true, half: true },
+      { key: "target_profession", label: "Target Profession", type: "text", placeholder: "e.g. Data Analyst", required: true, half: true },
+      { key: "reason_for_switch", label: "Reason For Switch", type: "select", options: SWITCH_REASON, half: true },
+      { key: "salary_expectation", label: "Salary Expectation (₹ LPA)", type: "number", placeholder: "e.g. 12", half: true },
+      { key: "transferable_skills", label: "Transferable Skills", type: "multiselect", options: GEN_SKILLS } ] },
+    { id: "capacity", title: "Your capacity to switch", subtitle: "How much you can invest in the move.", fields: [
+      { key: "learning_time", label: "Available Learning Time", type: "select", options: LEARN_TIME, required: true, half: true },
+      { key: "financial_situation", label: "Financial Runway", type: "select", options: RUNWAY, required: true, half: true } ] },
+  ],
+  "Laid Off Employee": [
+    { id: "background", title: "Your background", subtitle: "Where you were before the layoff.", fields: [
+      { key: "previous_role", label: "Previous Role", type: "text", placeholder: "e.g. Sales Manager", half: true },
+      { key: "industry", label: "Industry", type: "select", options: INDUSTRIES, half: true },
+      { key: "reason_for_layoff", label: "Reason For Layoff", type: "select", options: LAYOFF_REASON, half: true },
+      { key: "previous_salary", label: "Previous Salary (₹ LPA)", type: "number", placeholder: "e.g. 18", half: true },
+      { key: "years_experience", label: "Years of Experience", type: "number", placeholder: "e.g. 7", half: true },
+      { key: "skills", label: "Your Skills", type: "multiselect", options: GEN_SKILLS, required: true } ] },
+    { id: "recovery", title: "Your recovery situation", subtitle: "This shapes your fastest path back.", fields: [
+      { key: "savings_runway", label: "Savings Runway", type: "select", options: SAVINGS, required: true, half: true },
+      { key: "desired_industry", label: "Desired Industry", type: "select", options: INDUSTRIES, half: true },
+      { key: "relocation", label: "Willing To Relocate?", type: "select", options: RELOCATE, half: true } ] },
+  ],
+  Manager: [
+    { id: "scope", title: "Your management scope", subtitle: "The size of what you run today.", fields: [
+      { key: "department", label: "Department", type: "text", placeholder: "e.g. Sales / Engineering", half: true },
+      { key: "team_size", label: "Team Size", type: "select", options: TEAM_SIZE, required: true, half: true },
+      { key: "budget_responsibility", label: "Budget Responsibility", type: "select", options: BUDGET, half: true },
+      { key: "hiring_experience", label: "Hiring Experience", type: "select", options: HIRING, half: true } ] },
+    { id: "leadership", title: "Your leadership depth", subtitle: "Rate your real exposure.", fields: [
+      { key: "conflict_management", label: "Conflict Management", type: "select", options: SCALE3, required: true, half: true },
+      { key: "strategic_planning", label: "Strategic Planning", type: "select", options: SCALE3, required: true, half: true },
+      { key: "revenue_responsibility", label: "Revenue / P&L Responsibility", type: "select", options: SCALE3, half: true } ] },
+  ],
+  Freelancer: [
+    { id: "business", title: "Your freelance business", subtitle: "What you sell and to whom.", fields: [
+      { key: "services", label: "Services Offered", type: "multiselect", options: FREELANCE_SERVICES, required: true },
+      { key: "niche", label: "Your Niche", type: "text", placeholder: "e.g. SaaS landing pages", half: true },
+      { key: "monthly_income", label: "Monthly Income (₹)", type: "number", placeholder: "e.g. 80000", half: true },
+      { key: "clients", label: "Active Clients", type: "select", options: CLIENTS_OPTS, half: true },
+      { key: "pricing", label: "Pricing Position", type: "select", options: PRICING, required: true, half: true } ] },
+    { id: "growth", title: "Your growth engine", subtitle: "How clients find you today.", fields: [
+      { key: "marketing_channels", label: "Marketing Channels You Use", type: "multiselect", options: FREELANCE_CHANNELS },
+      { key: "portfolio_quality", label: "Portfolio Quality", type: "select", options: PORTFOLIO, required: true, half: true } ] },
+  ],
+  "Business Owner": [
+    { id: "business", title: "Your business", subtitle: "The shape of what you run.", fields: [
+      { key: "business_type", label: "Business Type", type: "select", options: BIZ_TYPE, required: true, half: true },
+      { key: "revenue", label: "Monthly Revenue (₹)", type: "number", placeholder: "e.g. 500000", half: true },
+      { key: "employees", label: "Employees", type: "select", options: EMP_OPTS, half: true },
+      { key: "profit_margin", label: "Profit Margin", type: "select", options: MARGIN, required: true, half: true } ] },
+    { id: "growth", title: "Your growth picture", subtitle: "Where the friction and upside are.", fields: [
+      { key: "customer_acquisition", label: "Customer Acquisition", type: "select", options: ACQ, required: true, half: true },
+      { key: "biggest_challenge", label: "Biggest Challenge", type: "select", options: BIZ_CHALLENGE, required: true, half: true },
+      { key: "growth_goals", label: "Growth Goal", type: "text", placeholder: "e.g. 2x revenue in 12 months", half: true },
+      { key: "marketing_channels", label: "Marketing Channels You Use", type: "multiselect", options: BIZ_CHANNELS } ] },
+  ],
 };
 
 const STUDENT_LIKE = ["Student", "Fresher"];
 
-export const ACTIVE_TYPES = ["Student", "IT Employee", "Working Professional"];
+export const ACTIVE_TYPES = ["Student", "Fresher", "IT Employee", "Working Professional", "Manager", "Laid Off Employee", "Career Switcher", "Freelancer", "Business Owner"];
 
 export function stepsFor(userType) {
   if (QUESTIONNAIRES[userType]) return QUESTIONNAIRES[userType];

@@ -131,3 +131,31 @@ def salary_projection(salary: Dict[str, int]) -> Dict[str, int]:
 def sec(sid: str, title: str, icon: str, stype: str, **data) -> Dict[str, Any]:
     """Build one typed report block. Renderer (web + PDF) maps `stype` -> layout."""
     return {"id": sid, "title": title, "icon": icon, "type": stype, **data}
+
+
+def diagnostic_sections(risks, opportunities, focus, stop):
+    """The universal backbone every report shares (content differs per category):
+    Q2 risks · Q3 missed opportunities · Q4 what to focus on · Q5 what to stop."""
+    return [
+        sec("risks", "Your Biggest Risks", "ShieldAlert", "cards", items=risks),
+        sec("opportunities", "Opportunities You're Missing", "Lightbulb", "cards", items=opportunities),
+        sec("focus", "What To Focus On Next", "Target", "list", intro="Your highest-leverage moves right now:", items=focus),
+        sec("stop", "What To Stop Doing", "Ban", "list", intro="These are quietly holding you back — stop now:", items=stop),
+    ]
+
+
+def action_roadmap(d30, d90, y1, extra=None):
+    """Q6/Q7/Q8 — 30-day, 90-day and 1-year plan. `extra` adds an optional 4th phase."""
+    items = [
+        {"phase": "Next 30 Days", "focus": d30.get("focus"), "points": d30["points"]},
+        {"phase": "Next 90 Days", "focus": d90.get("focus"), "points": d90["points"]},
+        {"phase": "Next 1 Year", "focus": y1.get("focus"), "points": y1["points"]},
+    ]
+    if extra:
+        items.append({"phase": extra["phase"], "focus": extra.get("focus"), "points": extra["points"]})
+    return sec("roadmap", "Your 30 / 90 / 365-Day Action Plan", "Map", "roadmap", items=items)
+
+
+def growth_sp(base):
+    base = max(2, round(base))
+    return {"year1": base, "year3": round(base * 1.6), "year5": round(base * 2.4), "year10": round(base * 3.8)}
