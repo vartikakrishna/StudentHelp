@@ -294,6 +294,7 @@ ALIASES = {
     "architect": "architect", "interior designer": "interior_designer", "fashion designer": "fashion_designer", "fashion": "fashion_designer",
     "animator": "3d_animator", "animation": "3d_animator", "vfx": "vfx_artist",
     "cyber security": "cybersecurity", "hacker": "ethical_hacker", "ethical hacker": "ethical_hacker", "cloud": "cloud_devops", "devops": "cloud_devops", "data analyst": "data_analyst",
+    "solutions architect": "cloud_architect", "solution architect": "cloud_architect", "software architect": "cloud_architect", "technical architect": "cloud_architect", "cloud architect": "cloud_architect",
 }
 
 

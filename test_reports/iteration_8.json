@@ -1,0 +1,37 @@
+{
+  "summary": "Future Direction Engine verified end-to-end via 14 new pytest cases (test_future_direction.py) + 5 real-UI funnels against REACT_APP_BACKEND_URL with mock Razorpay. IT Employee (future_goal=AI Engineer) renders 'Your Future Career Direction: AI / Machine Learning Engineer' with AI/ML Engineer pinned #1 (92% match) and the AI-survival sections (Reality Check, AI Threat Assessment, Transition Opportunities, Salary Plan) all intact. Working Professional (desired_position=Product Manager) renders 'Your Future Career Direction: Product Manager'; with 'Director' the FD section is gracefully skipped and 'Film Director' never appears. Manager (target_role=Management Consultant) renders 'Your Future Career Direction: Management Consultant'; with 'VP' the FD section is skipped and report stays valid. Blank fields keep old behavior (no FD section). Dream-engine regression (test_dream_engine.py, 17 tests) still 100% pass. All 9 user types still produce valid PDFs. Total: 31 backend tests pass + 3 full UI funnels (IT/Pro/Manager) including mock pay → unlocked full report → PDF link present.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Result preview locked card on IT", "issues": ["Result preview shows generic 'Professional Career Intelligence Report' label inside the locked grid for IT Employee — minor copy mismatch; functional flow unaffected."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_future_direction.py",
+    "/app/backend/tests/test_dream_engine.py",
+    "/app/test_reports/pytest/future_direction_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PaymentModal still ships two 'pay-now' buttons (pay-now-live-btn for real Razorpay + pay-now-btn for mock). Mock button is the only one wired in MOCK mode; selectors that look for both can mis-target. Already flagged in iteration_7; recommend renaming to pay-now-mock-btn.",
+    "type_engines._future_direction GENERIC_LEVELS set is hard-coded inline in type_engines.py; consider moving to career_db.SENIORITY_LEVELS so career_db.resolve_career() can short-circuit there too (single source of truth for generic-title detection).",
+    "ResultPreview.jsx is still ~210 LOC mixing preview/paywall/full-report/upsells (recurring callout).",
+    "About-step name/email inputs use data-testid q-name / q-email (good) but the result page locked sections lack stable data-testids on the actual locked CTA — selectors had to fall back to 'button:has-text(\"Unlock\")'. Add data-testid='result-unlock-cta'."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_future_direction.py",
+    "/app/test_reports/iteration_8.json"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 future_direction + 17/17 dream engine = 31/31 pytest)",
+    "frontend": "100% (3 user-type funnels: IT Employee AI Engineer, Working Professional Product Manager + Director, Manager Management Consultant + VP)"
+  },
+  "test_credentials": "n/a — public funnel, mock Razorpay (pay-now-btn).",
+  "seed_data_creation": "Created ~10 submissions via UI/backend: IT (AI Engineer, blank), Pro (Product Manager, Director, blank), Manager (Management Consultant, VP, blank) + dream-engine regression set.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Future Direction Engine fully verified. Run `pytest backend/tests/test_future_direction.py backend/tests/test_dream_engine.py -v` (needs REACT_APP_BACKEND_URL env). Key section id to assert: 'future_direction'. Header text: 'Your Future Career Direction: <Role>'. Generic seniority titles (Director/VP/CEO/Manager/CTO/CMO/Lead/Principal/etc.) are intentionally skipped — see GENERIC_LEVELS in type_engines.py line ~96. IT field key=future_goal (step 'depth'), Pro=desired_position (step 'growth'), Manager=target_role (step 'leadership'). Mock pay: 'button:has-text(\"Unlock\")' on result page → 'pay-now-btn' inside razorpay-mock-modal.",
+  "rca of the issue": "n/a — feature addition verified working. Implementation: _future_direction() helper in type_engines.py resolves free-text via career_db.goal_block(), pins the resolved role as the #1 card with a 'matches' typed section, skips when goal matches GENERIC_LEVELS or can't be resolved. analyze_it inserts the section after 'transitions'; analyze_professional after 'outlook'; analyze_manager after 'brand'. Verified both presence (specific role) and absence (generic level) for all three engines."
+}

@@ -130,7 +130,8 @@ const IT_STEPS = [
     { key: "cloud_knowledge", label: "Cloud Knowledge", type: "select", options: LEVELS, required: true, half: true },
     { key: "ai_knowledge", label: "AI / ML Knowledge", type: "select", options: LEVELS, required: true, half: true },
     { key: "system_design", label: "System Design Knowledge", type: "select", options: LEVELS, required: true, half: true },
-    { key: "open_source", label: "Open Source Contributions", type: "select", options: OPEN_SOURCE, half: true } ] },
+    { key: "open_source", label: "Open Source Contributions", type: "select", options: OPEN_SOURCE, half: true },
+    { key: "future_goal", label: "Your Future Direction (target role)", type: "text", placeholder: "e.g. AI Engineer, Solutions Architect", half: true } ] },
 ];
 
 const PRO_STEPS = [
@@ -200,7 +201,8 @@ export const QUESTIONNAIRES = {
     { id: "leadership", title: "Your leadership depth", subtitle: "Rate your real exposure.", fields: [
       { key: "conflict_management", label: "Conflict Management", type: "select", options: SCALE3, required: true, half: true },
       { key: "strategic_planning", label: "Strategic Planning", type: "select", options: SCALE3, required: true, half: true },
-      { key: "revenue_responsibility", label: "Revenue / P&L Responsibility", type: "select", options: SCALE3, half: true } ] },
+      { key: "revenue_responsibility", label: "Revenue / P&L Responsibility", type: "select", options: SCALE3, half: true },
+      { key: "target_role", label: "Your Target Leadership Role", type: "text", placeholder: "e.g. Product Manager, Operations Head", half: true } ] },
   ],
   Freelancer: [
     { id: "business", title: "Your freelance business", subtitle: "What you sell and to whom.", fields: [

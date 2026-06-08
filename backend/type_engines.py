@@ -85,6 +85,30 @@ def _preview(meta, headline, verdict, summary, scores):
 LEVELS = {"None": 0, "Beginner": 25, "Intermediate": 50, "Advanced": 75, "Expert": 100, "": 30}
 
 
+def _future_direction(goal_text: str, traits: Dict[str, float], prefix: str = "Your Future Career Direction"):
+    """Resolve a free-text career goal → a 'future_direction' matches section + matches list.
+    Returns (section_or_None, matches_list). Skips gracefully when the goal can't be resolved
+    or is a generic seniority level (Director/VP/CEO…) that maps to no specific career."""
+    g = (goal_text or "").strip()
+    if not g:
+        return None, []
+    # Pure seniority/level goals don't map to a specific career — don't force a misfire.
+    GENERIC_LEVELS = {
+        "director", "vp", "vice president", "svp", "evp", "avp", "head", "department head",
+        "chief", "ceo", "cto", "cfo", "coo", "cmo", "cio", "president", "executive",
+        "manager", "senior manager", "general manager", "gm", "team lead", "team leader",
+        "lead", "principal", "partner", "founder of a company", "leadership role", "the next level up",
+    }
+    if g.lower() in GENERIC_LEVELS:
+        return None, []
+    norm = build_interest_norm([], [], traits)
+    gb = career_db.goal_block(g, norm, traits, n_related=3)
+    if not gb["resolved"]:
+        return None, []
+    section = sec("future_direction", f"{prefix}: {gb['career_title']}", "Compass", "matches", items=gb["matches"])
+    return section, gb["matches"]
+
+
 # ============================================================
 # STUDENT — Career Direction Report
 # ============================================================
@@ -341,6 +365,9 @@ def analyze_it(profile: Dict[str, Any]) -> Dict[str, Any]:
     best_role = CAREER_BY_KEY[TRANSITION_KEYS[0]]
     matches = _cards_by_keys(TRANSITION_KEYS[:3])
     learn = (gaps + EMERGING_TECH)[:6]
+    fd_section, fd_matches = _future_direction(a.get("future_goal"), traits)
+    if fd_matches:
+        matches = fd_matches
 
     risk_tone = "rose" if ai_risk >= 60 else "amber" if ai_risk >= 40 else "emerald"
     reality = (f"{name}, no sugar-coating: as a {dev_type.lower()} with {int(exp)} years in, your role carries "
@@ -368,6 +395,7 @@ def analyze_it(profile: Dict[str, Any]) -> Dict[str, Any]:
             {"label": "AI / ML specialisation", "value": int(clamp(40 - ai_k * 0.3, 8, 45)), "suffix": "%", "tone": "emerald"},
         ]),
         sec("transitions", "Transition Opportunities", "Repeat", "cards", items=transitions[:4]),
+        *([fd_section] if fd_section else []),
         sec("gaps", "Your Tech Skill Gaps", "Puzzle", "tags", intro="In-demand skills you're missing (close these first):", items=gaps or ["Your stack is solid — go deeper on system design + AI."]),
         sec("emerging", "Best Emerging Technologies", "Rocket", "tags", intro="Where the next decade of high pay is heading:", items=EMERGING_TECH),
         sec("tech_roadmap", "Future Tech Roadmap", "Map", "roadmap", items=[
@@ -457,6 +485,9 @@ def analyze_professional(profile: Dict[str, Any]) -> Dict[str, Any]:
     if matches:
         matches[0]["title"] = desired if a.get("desired_position") else matches[0]["title"]
     learn = ["Stakeholder leadership", "Strategic communication", "Data-driven decisions", "Executive presence", "Domain depth"]
+    fd_section, fd_matches = _future_direction(a.get("desired_position"), traits)
+    if fd_matches:
+        matches = fd_matches
 
     reality = (f"{name}, the honest read on your growth: in {industry} as {role} with {int(exp)} years, your promotion potential "
                f"is {promotion_potential}% and your industry outlook is {'strong' if ind_demand >= 75 else 'moderate' if ind_demand >= 60 else 'soft'}. "
@@ -494,6 +525,7 @@ def analyze_professional(profile: Dict[str, Any]) -> Dict[str, Any]:
              "body": "Most professionals plateau on visibility and strategic positioning, not capability. Make your wins legible to decision-makers."},
         ]),
         sec("outlook", "Industry Outlook", "Building2", "callout", tone="indigo" if ind_demand >= 70 else "amber", label=f"{industry} — {ind_demand}% demand", text=outlook),
+        *([fd_section] if fd_section else []),
         sec("growth_roadmap", "Your Growth Roadmap", "Map", "roadmap", items=[
             {"phase": "Next 90 Days", "focus": "Become visible", "points": ["Own one high-impact, measurable project", "Build a relationship with your skip-level", "Quantify and broadcast your wins"]},
             {"phase": "6 Months", "focus": "Lead beyond your role", "points": [f"Develop {learn[0]} & {learn[1]}", "Take on cross-functional leadership", "Close one strategic skill gap"]},
@@ -824,6 +856,7 @@ def analyze_manager(profile):
     style = "Visionary Strategist" if strategy >= 70 else "People-First Coach" if traits["team"] else "Decisive Operator"
     sp = growth_sp(max(18, round(14 + team / 100 * 14)))
     gaps = ["Executive communication & storytelling", "P&L / business ownership", "Strategic planning at scale", "Board / stakeholder influence", "Building a personal leadership brand"]
+    fd_section, fd_matches = _future_direction(a.get("target_role"), traits)
 
     reality = (f"{name}, the honest read: you're a {'strong' if leadership >= 70 else 'developing'} manager (leadership {leadership}%), but executive "
                f"readiness is {executive}%. The jump from manager to leader isn't about managing more people — it's about owning outcomes, "
@@ -847,6 +880,7 @@ def analyze_manager(profile):
         sec("brand", "Influence & Personal Brand", "Megaphone", "cards", items=[
             {"title": "Build executive presence", "badges": [{"text": "Promotion lever", "tone": "emerald"}], "body": "Promotions to leadership are decided on perceived judgement and influence, not effort. Be visible where strategy is discussed."},
             {"title": "Sponsor, don't just manage", "body": "Develop a sponsor above you and become one below you — multiplied influence is what executives have."}]),
+        *([fd_section] if fd_section else []),
         *diagnostic_sections(
             risks=[
                 {"title": "Stuck as 'the great manager'", "badges": [{"text": "Career-capping", "tone": "rose"}], "body": "Being too good at execution can trap you — leaders are promoted for outcomes and strategy, not reliability."},
@@ -877,8 +911,8 @@ def analyze_manager(profile):
                         {"label": "Leadership Score", "value": leadership, "suffix": "%", "locked": False},
                         {"label": "Promotion Potential", "locked": True}, {"label": "Management Style", "locked": True},
                         {"label": "Executive Readiness", "locked": True}, {"label": "Personal Brand Plan", "locked": True}])
-    return _wrap(profile, meta, reality, sections, preview, [], gaps, sp,
-                 extra={"ai_focus": "manager-to-executive growth: be blunt about why great managers get stuck and what executive readiness really requires",
+    return _wrap(profile, meta, reality, sections, preview, fd_matches, gaps, sp,
+                 extra={"ai_focus": "manager-to-executive growth: be blunt about why great managers get stuck and what executive readiness really requires. If a target leadership role is given, honor it and show related directions",
                         "career_match": executive, "leadership_potential": leadership, "ai_resistance_score": 78})
 
 
