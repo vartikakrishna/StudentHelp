@@ -1,0 +1,24 @@
+{
+  "summary": "Frontend-only validation of Career Blueprint AI dual-pricing funnel. Tested full Student (₹199) and Professional/IT Employee (₹499) flows end-to-end including questionnaire → result preview → locked-section pricing → comparison table highlight → MOCK Razorpay unlock → full report rendering with plan-specific sections. Both flows passed all assertions.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PROFESSIONAL_TYPES in data/blueprint.js includes 'Fresher' (line 17), but backend plan_for() in server.py treats Student/Fresher as student plan (₹199). The frontend's `isPro = PROFESSIONAL_TYPES.includes(p.user_type)` therefore renders the extra Professional questionnaire step for Freshers, while server returns plan='student'. The result page falls back to result.plan from server so pricing stays correct, but UX is inconsistent — a Fresher fills professional job-title/salary fields then sees a Student-priced report. Either remove 'Fresher' from PROFESSIONAL_TYPES or align backend to charge professional for Freshers.",
+    "ResultPreview.jsx is ~385 lines and mixes preview + locked + full report. Consider splitting FullReport and LockedSection into their own files for maintainability.",
+    "PaymentModal mock flow does not validate that order.amount matches the plan price client-side; relies entirely on server. Acceptable for MOCK mode but consider an assertion before pay."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "test_credentials": "n/a - public funnel, no auth",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Both Student and IT Employee end-to-end funnels validated via Playwright on external REACT_APP_BACKEND_URL. Verified: success-score render, locked-section plan name + ₹199/₹999 vs ₹499/₹2499 strikethrough, both unlock CTAs include ₹{price}, comparison-table column highlight switches on plan, MOCK payment via /api/create-order (mode=mock) + /api/verify-payment unlocks full-report, download-pdf-btn present, 4 upsell cards rendered. PRO-only sections (Your Potential Scores, Resume/LinkedIn & Interview Strategy, IT Employee Future Report, Career Switch Opportunities) correctly appear ONLY in the Professional report and are absent in the Student report. Note inconsistency: 'Fresher' is in PROFESSIONAL_TYPES (shows pro questionnaire step) but backend bills as student — see code review comment.",
+  "rca of the issue": "No bugs found in tested flows."
+}

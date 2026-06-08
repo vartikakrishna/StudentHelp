@@ -13,8 +13,11 @@ EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY")
 
 SYSTEM = (
     "You are a brutally honest senior career strategist writing a paid Career Blueprint. "
-    "No motivational fluff, no astrology, no 'you can be anything'. Be direct, specific, practical, "
-    "and willing to deliver hard truths. Keep every field tight and skimmable. "
+    "ZERO sugar-coating. No motivational fluff, no astrology, no 'you can be anything', no empty reassurance. "
+    "If a path is a bad bet, say it bluntly and say why. Name the uncomfortable truths most advisors avoid: "
+    "wasted years, weak skills, oversaturated fields, automation risk, and the real cost of indecision. "
+    "Back every hard claim with the data given. Be direct, specific, practical and respectful — honest, never cruel. "
+    "Do not soften verdicts with hedging like 'but anything is possible'. Keep every field tight and skimmable. "
     "Respond with ONLY valid JSON, no markdown fences, no commentary."
 )
 
@@ -91,7 +94,7 @@ TOP MATCHES (deterministic, DO NOT change numbers): {matches_summary}.
 CAREERS TO AVOID (deterministic): {avoid_summary}.
 Portfolio AI risk: {bp['portfolio_ai_risk']}% ({bp['ai_risk_label']}). Business {bp['business_potential']}%, Leadership {bp['leadership_potential']}%. 5-yr salary est ₹{bp['salary_projection']['year5']} LPA.
 
-Write ONLY this JSON (brutally honest, concise, 1-3 sentences each unless noted):
+Write ONLY this JSON (brutally honest, NO sugar-coating, concise, 1-3 sentences each unless noted. State hard truths plainly and back them with the numbers above):
 {{
   "career_reality_check": "120-160 words, hard truths + the realistic best path",
   "personality_insight": "2 sentences",
