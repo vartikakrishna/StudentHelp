@@ -215,8 +215,14 @@ export const COMPARISON = [
 ];
 
 export const UPSELLS = [
-  { title: "Resume Optimization Report", price: 299, icon: "FileText" },
-  { title: "LinkedIn Optimization Report", price: 299, icon: "Linkedin" },
-  { title: "Interview Preparation Blueprint", price: 499, icon: "MessageSquare" },
-  { title: "Complete Career Transformation Bundle", price: 999, icon: "Sparkles", best: true },
+  { id: "resume", title: "Resume Optimization Report", price: 299, icon: "FileText" },
+  { id: "linkedin", title: "LinkedIn Optimization Report", price: 299, icon: "Linkedin" },
+  { id: "interview", title: "Interview Preparation Blueprint", price: 499, icon: "MessageSquare" },
+  { id: "bundle", title: "Complete Career Transformation Bundle", price: 999, icon: "Sparkles", best: true },
 ];
+
+export const ADDON_LABELS = {
+  resume: "Resume Report",
+  linkedin: "LinkedIn Report",
+  interview: "Interview Blueprint",
+};

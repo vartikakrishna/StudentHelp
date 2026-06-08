@@ -1,0 +1,26 @@
+{
+  "summary": "Frontend-only end-to-end validation of the new post-purchase UPSELL add-ons funnel for Career Blueprint AI. Completed full IT Employee flow (questionnaire → preview → MOCK Razorpay unlock → full report) and then exhaustively validated upsell selection, bundle exclusivity, sticky checkout bar, MOCK add-on payment, purchased-state download links, and that the unpurchased LinkedIn card remained selectable at ₹299. All assertions passed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ResultPreview.jsx is now ~443 lines and the FullReport sub-component owns upsell selection state, payment modal state, and downloads — consider extracting an <UpsellsSection /> module for maintainability (previous iteration also flagged this).",
+    "addon-checkout-bar uses `sticky bottom-4` inside the Section; on very long reports the sticky behaviour was visually correct but the bar shares the same scroll container as the report. Confirm z-30 is high enough across all viewports.",
+    "Bundle exclusivity logic (compsOf/toggle) correctly clears individual selections when bundle is picked and vice-versa — verified live. Edge case 'bundle already purchased' is not testable here without backend state but UI relies on isBought() which checks all three components — looks correct.",
+    "After successful add-on purchase, onAddonSuccess merges new components into `purchased` and clears `selected`; success toast appears. Behaviour matches spec.",
+    "Inconsistency from previous iterations still present: 'Fresher' is in PROFESSIONAL_TYPES so it renders professional questionnaire step, but backend bills as student (out of scope for this run)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "n/a — public funnel, no auth. MOCK Razorpay (no keys).",
+  "seed_data_creation": "One submission created via the funnel; submission_id observed e.g. eec3fff8-a0a7-43ec-85fc-692ee6d26bea. Resume + Interview add-ons purchased on that submission.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Full upsell flow validated via Playwright on external REACT_APP_BACKEND_URL. Verified end-to-end: (1) IT Employee questionnaire → result-page with success-score; (2) unlock-premium-btn opens razorpay-mock-modal and pay-now-btn renders full-report; (3) upsells section shows 4 cards (resume/linkedin/interview/bundle); (4) selecting resume+interview shows addon-checkout-bar with text '2 add-ons selected · ₹798' and Buy Add-ons · ₹798 button; (5) clicking upsell-select-bundle replaces selection — bar text becomes '1 add-on selected · ₹999'; (6) deselecting bundle removes the bar (count=0); (7) re-selecting resume+interview and clicking buy-addons-btn opens addon PaymentModal showing ₹798 and 'Add-on' label; (8) after pay-now-btn, resume + interview cards switch to PURCHASED state with addon-download-resume and addon-download-interview links whose hrefs contain '/api/report/{id}/addon/{component}/pdf'; (9) checkout bar disappears; (10) LinkedIn card still shows ₹299 and 'Add to order' (upsell-select-linkedin visible). Screenshot saved confirming PURCHASED badges on Resume + Interview cards and BEST VALUE on Bundle.",
+  "rca of the issue": "No bugs found."
+}

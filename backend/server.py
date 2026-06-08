@@ -17,7 +17,8 @@ from datetime import datetime, timezone
 from careers import compute_blueprint
 from engines import build_engines, build_regret
 from ai_engine import enhance_report
-from pdf_generator import build_pdf
+from pdf_generator import build_pdf, build_addon_pdf
+from addons import ADDON_CATALOG, expand_addons, addon_total, build_addon_content, normalize_ids
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -125,6 +126,19 @@ class OrderRequest(BaseModel):
 
 class VerifyRequest(BaseModel):
     submission_id: str
+    razorpay_order_id: Optional[str] = ""
+    razorpay_payment_id: Optional[str] = ""
+    razorpay_signature: Optional[str] = ""
+
+
+class AddonOrderRequest(BaseModel):
+    submission_id: str
+    addon_ids: List[str] = Field(default_factory=list)
+
+
+class AddonVerifyRequest(BaseModel):
+    submission_id: str
+    addon_ids: List[str] = Field(default_factory=list)
     razorpay_order_id: Optional[str] = ""
     razorpay_payment_id: Optional[str] = ""
     razorpay_signature: Optional[str] = ""
@@ -278,6 +292,85 @@ async def report_pdf(submission_id: str):
         raise HTTPException(status_code=402, detail="Payment required to download the full report")
     pdf_bytes = build_pdf(sub)
     filename = f"Career_Blueprint_{sub['name'].split(' ')[0]}.pdf"
+    return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf",
+                             headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+# ----------------------- Add-ons (post-purchase upsells) -----------------------
+@api_router.post("/create-addon-order")
+async def create_addon_order(req: AddonOrderRequest):
+    sub = await db.submissions.find_one({"id": req.submission_id}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    if not sub.get("paid"):
+        raise HTTPException(status_code=402, detail="Unlock your main report before adding extras")
+    ids = normalize_ids(req.addon_ids)
+    total = addon_total(ids)
+    if total <= 0:
+        raise HTTPException(status_code=400, detail="No valid add-ons selected")
+    amount_paise = total * 100
+    label = ", ".join(ADDON_CATALOG[i]["title"] for i in ids)
+
+    if PAYMENT_MODE == "live":
+        import razorpay
+        rzp = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+        order = rzp.order.create({"amount": amount_paise, "currency": "INR", "payment_capture": 1,
+                                  "receipt": f"cba_{req.submission_id[:26]}"})
+        return {"mode": "live", "key_id": RAZORPAY_KEY_ID, "order_id": order["id"], "amount": amount_paise,
+                "currency": "INR", "label": label, "name": sub["name"], "email": sub["email"], "phone": sub.get("phone", "")}
+
+    order_id = f"order_addon_mock_{uuid.uuid4().hex[:12]}"
+    return {"mode": "mock", "key_id": "rzp_test_mock", "order_id": order_id, "amount": amount_paise,
+            "currency": "INR", "label": label, "name": sub["name"], "email": sub["email"], "phone": sub.get("phone", "")}
+
+
+@api_router.post("/verify-addon-payment")
+async def verify_addon_payment(req: AddonVerifyRequest):
+    sub = await db.submissions.find_one({"id": req.submission_id}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    if not sub.get("paid"):
+        raise HTTPException(status_code=402, detail="Unlock your main report before adding extras")
+
+    if PAYMENT_MODE == "live":
+        body = f"{req.razorpay_order_id}|{req.razorpay_payment_id}"
+        expected = hmac.new(RAZORPAY_KEY_SECRET.encode(), body.encode(), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(expected, req.razorpay_signature or ""):
+            raise HTTPException(status_code=400, detail="Payment signature verification failed")
+        payment_id = req.razorpay_payment_id
+    else:
+        payment_id = req.razorpay_payment_id or f"pay_addon_mock_{uuid.uuid4().hex[:12]}"
+
+    components = expand_addons(req.addon_ids)
+    if not components:
+        raise HTTPException(status_code=400, detail="No valid add-ons selected")
+
+    addons = sub.get("addons") or {}
+    for c in components:
+        if c not in addons:
+            addons[c] = build_addon_content(c, sub)
+    purchased = sorted(set((sub.get("purchased_addons") or []) + components))
+    await db.submissions.update_one(
+        {"id": req.submission_id},
+        {"$set": {"addons": addons, "purchased_addons": purchased},
+         "$push": {"addon_payments": {"payment_id": payment_id, "components": components,
+                                      "at": datetime.now(timezone.utc).isoformat()}}})
+    logger.info("Add-ons purchased: %s -> %s", req.submission_id, components)
+    return {"success": True, "payment_id": payment_id, "purchased_addons": purchased}
+
+
+@api_router.get("/report/{submission_id}/addon/{addon_id}/pdf")
+async def addon_pdf(submission_id: str, addon_id: str):
+    sub = await db.submissions.find_one({"id": submission_id}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    if addon_id not in (sub.get("purchased_addons") or []):
+        raise HTTPException(status_code=402, detail="This add-on has not been purchased")
+    if not (sub.get("addons") or {}).get(addon_id):
+        sub.setdefault("addons", {})[addon_id] = build_addon_content(addon_id, sub)
+    pdf_bytes = build_addon_pdf(sub, addon_id)
+    title = ADDON_CATALOG.get(addon_id, {}).get("title", "Addon").replace(" ", "_")
+    filename = f"{title}_{sub['name'].split(' ')[0]}.pdf"
     return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf",
                              headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 

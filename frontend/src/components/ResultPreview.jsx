@@ -4,8 +4,9 @@ import { motion } from "framer-motion";
 import { Lock, Download, Sparkles, ArrowLeft, ShieldAlert, Gauge } from "lucide-react";
 import { PaymentModal } from "./PaymentModal";
 import { CTAButton } from "./CTAButton";
-import { pdfUrl } from "../lib/api";
-import { PLAN_CONFIG, COMPARISON, UPSELLS } from "../data/blueprint";
+import { pdfUrl, addonPdfUrl } from "../lib/api";
+import { toast } from "sonner";
+import { PLAN_CONFIG, COMPARISON, UPSELLS, ADDON_LABELS } from "../data/blueprint";
 
 const riskStyle = (label = "") => {
   if (label.includes("Very Low") || label === "Low Risk") return "bg-emerald-50 text-emerald-700 border-emerald-200";
@@ -111,7 +112,7 @@ export const ResultPreview = ({ result, onBack }) => {
           </div>
         </div>
 
-        {paid && report ? <FullReport report={report} submissionId={submission_id} isPro={isPro} /> : <LockedSection plan={plan} onUnlock={() => setShowPay(true)} />}
+        {paid && report ? <FullReport report={report} submissionId={submission_id} isPro={isPro} name={result.name} email={result.email} phone={result.phone} /> : <LockedSection plan={plan} onUnlock={() => setShowPay(true)} />}
       </div>
 
       {showPay && <PaymentModal submissionId={submission_id} name={result.name || "You"} email={result.email} phone={result.phone} onClose={() => setShowPay(false)} onSuccess={onSuccess} />}
@@ -194,9 +195,33 @@ const Section = ({ icon, title, children }) => {
   );
 };
 
-const FullReport = ({ report, submissionId, isPro }) => {
+const FullReport = ({ report, submissionId, isPro, name, email, phone }) => {
   const sp = report.salary_projection;
   const maxSalary = Math.max(...Object.values(sp));
+  const [selected, setSelected] = useState(new Set());
+  const [purchased, setPurchased] = useState(new Set());
+  const [showAddonPay, setShowAddonPay] = useState(false);
+
+  const compsOf = (u) => (u.id === "bundle" ? ["resume", "linkedin", "interview"] : [u.id]);
+  const isBought = (u) => compsOf(u).every((c) => purchased.has(c));
+  const toggle = (u) => setSelected((prev) => {
+    const n = new Set(prev);
+    if (u.id === "bundle") {
+      if (n.has("bundle")) n.delete("bundle");
+      else { n.clear(); n.add("bundle"); }
+    } else {
+      n.delete("bundle");
+      if (n.has(u.id)) n.delete(u.id); else n.add(u.id);
+    }
+    return n;
+  });
+  const selectedTotal = UPSELLS.filter((u) => selected.has(u.id)).reduce((s, u) => s + u.price, 0);
+  const onAddonSuccess = (list) => {
+    setPurchased(new Set([...purchased, ...(list || [])]));
+    setSelected(new Set());
+    setShowAddonPay(false);
+    toast.success("Add-ons unlocked — download them below.");
+  };
   return (
     <div data-testid="full-report">
       <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -356,23 +381,55 @@ const FullReport = ({ report, submissionId, isPro }) => {
         </Section>
       )}
 
-      {/* Upsells */}
+      {/* Upsells — selectable post-purchase add-ons */}
       <Section icon={Icons.Plus} title="Supercharge Your Career">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="upsells">
           {UPSELLS.map((u) => {
             const Icon = Icons[u.icon] || Icons.Sparkles;
+            const bought = isBought(u);
+            const sel = selected.has(u.id);
             return (
-              <div key={u.title} className={`relative rounded-2xl p-5 ${u.best ? "grad-primary text-white glow-primary" : "glass-card"}`} data-testid={`upsell-${u.price}`}>
-                {u.best && <span className="absolute top-3 right-3 text-[10px] font-mono bg-white/20 rounded-full px-2 py-0.5">BEST VALUE</span>}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${u.best ? "bg-white/20" : "grad-primary"}`}><Icon className="w-5 h-5 text-white" strokeWidth={1.8} /></div>
-                <p className={`font-head font-700 text-sm mb-1 ${u.best ? "text-white" : "text-slate-900"}`}>{u.title}</p>
-                <p className={`font-head font-800 text-2xl ${u.best ? "text-white" : "text-gradient"}`}>₹{u.price}</p>
-                <button className={`mt-3 w-full rounded-full py-2 text-sm font-medium transition ${u.best ? "bg-white text-purple-700 hover:scale-105" : "border border-purple-200 text-purple-700 hover:bg-purple-50"}`}>Add-on</button>
+              <div key={u.id} data-testid={`upsell-${u.id}`}
+                className={`relative rounded-2xl p-5 transition ${bought ? "border-2 border-emerald-300 bg-emerald-50" : u.best ? "grad-primary text-white glow-primary" : sel ? "ring-2 ring-purple-400 bg-purple-50 border border-purple-200" : "glass-card"}`}>
+                {u.best && !bought && <span className="absolute top-3 right-3 text-[10px] font-mono bg-white/20 rounded-full px-2 py-0.5">BEST VALUE</span>}
+                {bought && <span className="absolute top-3 right-3 text-[10px] font-mono bg-emerald-500 text-white rounded-full px-2 py-0.5">PURCHASED</span>}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${bought ? "bg-emerald-500" : u.best ? "bg-white/20" : "grad-primary"}`}><Icon className="w-5 h-5 text-white" strokeWidth={1.8} /></div>
+                <p className={`font-head font-700 text-sm mb-1 ${u.best && !bought ? "text-white" : "text-slate-900"}`}>{u.title}</p>
+                {bought ? (
+                  <div className="mt-2 space-y-1.5">
+                    {compsOf(u).map((c) => (
+                      <a key={c} href={addonPdfUrl(submissionId, c)} target="_blank" rel="noreferrer" data-testid={`addon-download-${c}`}
+                         className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 hover:underline"><Download className="w-4 h-4" /> {ADDON_LABELS[c]}</a>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <p className={`font-head font-800 text-2xl ${u.best ? "text-white" : "text-gradient"}`}>₹{u.price}</p>
+                    <button onClick={() => toggle(u)} data-testid={`upsell-select-${u.id}`}
+                      className={`mt-3 w-full rounded-full py-2 text-sm font-medium transition ${sel ? "bg-purple-600 text-white" : u.best ? "bg-white text-purple-700 hover:scale-105" : "border border-purple-200 text-purple-700 hover:bg-purple-50"}`}>
+                      {sel ? "Selected ✓" : "Add to order"}
+                    </button>
+                  </>
+                )}
               </div>
             );
           })}
         </div>
+        {selected.size > 0 && (
+          <div className="sticky bottom-4 mt-5 z-30">
+            <div className="flex items-center justify-between gap-4 rounded-2xl glass-card border border-purple-200 px-5 py-3 shadow-xl" data-testid="addon-checkout-bar">
+              <p className="text-sm text-slate-600">{selected.size} add-on{selected.size > 1 ? "s" : ""} selected · <b className="text-purple-600">₹{selectedTotal}</b></p>
+              <CTAButton testid="buy-addons-btn" onClick={() => setShowAddonPay(true)}>Buy Add-ons · ₹{selectedTotal}</CTAButton>
+            </div>
+          </div>
+        )}
       </Section>
+
+      {showAddonPay && (
+        <PaymentModal submissionId={submissionId} name={name} email={email} phone={phone}
+          addonIds={Array.from(selected)} addonLabel={`${selected.size} Career Add-on${selected.size > 1 ? "s" : ""}`} addonAmount={selectedTotal}
+          onClose={() => setShowAddonPay(false)} onSuccess={onAddonSuccess} />
+      )}
 
       {/* Future self letter */}
       <div className="rounded-[2rem] grad-primary p-8 mb-6 text-white glow-primary overflow-hidden relative">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Smartphone, CreditCard, Landmark, Wallet, ShieldCheck, Loader2, CheckCircle2, Sparkles } from "lucide-react";
-import { createOrder, verifyPayment } from "../lib/api";
+import { createOrder, verifyPayment, createAddonOrder, verifyAddonPayment } from "../lib/api";
 
 const METHODS = [
   { key: "upi", label: "UPI", icon: Smartphone, hint: "GPay · PhonePe · Paytm" },
@@ -20,29 +20,36 @@ const loadRazorpay = () =>
     document.body.appendChild(s);
   });
 
-export const PaymentModal = ({ submissionId, name, email, phone, onClose, onSuccess }) => {
+export const PaymentModal = ({ submissionId, name, email, phone, addonIds = null, addonLabel = "", addonAmount = 0, onClose, onSuccess }) => {
   const [order, setOrder] = useState(null);
   const [method, setMethod] = useState("upi");
   const [stage, setStage] = useState("loading"); // loading | pay | processing | done | error
   const [vpa, setVpa] = useState("");
+  const isAddon = Array.isArray(addonIds) && addonIds.length > 0;
 
   const finish = useCallback(async (verifyPayload) => {
     setStage("processing");
     try {
-      const res = await verifyPayment(verifyPayload);
-      setStage("done");
-      setTimeout(() => onSuccess(res.report, res.name), 1100);
+      if (isAddon) {
+        const res = await verifyAddonPayment({ ...verifyPayload, addon_ids: addonIds });
+        setStage("done");
+        setTimeout(() => onSuccess(res.purchased_addons), 1100);
+      } else {
+        const res = await verifyPayment(verifyPayload);
+        setStage("done");
+        setTimeout(() => onSuccess(res.report, res.name), 1100);
+      }
     } catch (e) {
       setStage("error");
     }
-  }, [onSuccess]);
+  }, [onSuccess, isAddon, addonIds]);
 
   const openLive = useCallback(async (ord) => {
     const ok = await loadRazorpay();
     if (!ok) { setStage("error"); return; }
     const rzp = new window.Razorpay({
       key: ord.key_id, amount: ord.amount, currency: ord.currency, order_id: ord.order_id,
-      name: "Career Blueprint AI", description: "Full Career Blueprint (PDF)",
+      name: "Career Blueprint AI", description: isAddon ? (ord.label || "Career Add-ons") : "Full Career Blueprint (PDF)",
       prefill: { name: name || "", email: email || "", contact: phone || "" },
       theme: { color: "#7C3AED" },
       handler: (resp) => finish({
@@ -54,17 +61,18 @@ export const PaymentModal = ({ submissionId, name, email, phone, onClose, onSucc
       modal: { ondismiss: () => setStage("pay") },
     });
     rzp.open();
-  }, [finish, name, email, phone, submissionId]);
+  }, [finish, name, email, phone, submissionId, isAddon]);
 
   useEffect(() => {
-    createOrder(submissionId)
+    const orderPromise = isAddon ? createAddonOrder(submissionId, addonIds) : createOrder(submissionId);
+    orderPromise
       .then((o) => {
         setOrder(o);
         if (o.mode === "live") { setStage("processing"); openLive(o); }
         else setStage("pay");
       })
       .catch(() => setStage("error"));
-  }, [submissionId, openLive]);
+  }, [submissionId, openLive, isAddon, addonIds]);
 
   const payMock = async () => {
     setStage("processing");
@@ -72,8 +80,9 @@ export const PaymentModal = ({ submissionId, name, email, phone, onClose, onSucc
     finish({ submission_id: submissionId, razorpay_order_id: order.order_id, razorpay_payment_id: "", razorpay_signature: "" });
   };
 
-  const amount = order ? order.amount / 100 : 199;
+  const amount = order ? order.amount / 100 : (isAddon ? addonAmount : 199);
   const isLive = order?.mode === "live";
+  const productLabel = isAddon ? (addonLabel || "Career Add-ons") : (order?.plan === "professional" ? "Professional Career Intelligence Report" : "Student Career Blueprint");
 
   return (
     <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-6" data-testid="razorpay-mock-modal">
@@ -88,7 +97,7 @@ export const PaymentModal = ({ submissionId, name, email, phone, onClose, onSucc
         </div>
 
         <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100 bg-indigo-50/40">
-          <div><p className="text-slate-600 text-sm">{order?.plan === "professional" ? "Professional Career Intelligence Report" : "Student Career Blueprint"}</p><p className="text-xs text-slate-400 font-mono">{name}</p></div>
+          <div><p className="text-slate-600 text-sm">{productLabel}</p><p className="text-xs text-slate-400 font-mono">{name}</p></div>
           <p className="font-head font-800 text-3xl text-gradient">₹{amount}</p>
         </div>
 
@@ -126,7 +135,7 @@ export const PaymentModal = ({ submissionId, name, email, phone, onClose, onSucc
             )}
 
             {stage === "done" && (
-              <motion.div key="d" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="py-10 flex flex-col items-center text-center"><CheckCircle2 className="w-14 h-14 text-emerald-500 mb-4" /><p className="font-head font-700 text-xl text-slate-900">Payment Successful!</p><p className="text-slate-500 text-sm mt-1">Unlocking your full Career Blueprint…</p></motion.div>
+              <motion.div key="d" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="py-10 flex flex-col items-center text-center"><CheckCircle2 className="w-14 h-14 text-emerald-500 mb-4" /><p className="font-head font-700 text-xl text-slate-900">Payment Successful!</p><p className="text-slate-500 text-sm mt-1">{isAddon ? "Unlocking your add-ons…" : "Unlocking your full Career Blueprint…"}</p></motion.div>
             )}
 
             {stage === "error" && (

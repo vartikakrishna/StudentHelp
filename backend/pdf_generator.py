@@ -323,3 +323,52 @@ def build_pdf(submission: Dict[str, Any]) -> bytes:
 
     doc.build(e)
     return buf.getvalue()
+
+
+def build_addon_pdf(submission: Dict[str, Any], component_id: str) -> bytes:
+    """Render a single add-on deliverable (resume / linkedin / interview) as a branded PDF."""
+    st = _styles()
+    content = (submission.get("addons") or {}).get(component_id) or {}
+    name = submission.get("name", "You")
+    buf = io.BytesIO()
+
+    doc = BaseDocTemplate(buf, pagesize=A4, leftMargin=20 * mm, rightMargin=20 * mm,
+                          topMargin=22 * mm, bottomMargin=18 * mm)
+    cw = doc.width
+    frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="main")
+    cover = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="cover")
+    doc.addPageTemplates([
+        PageTemplate(id="cover", frames=[cover], onPage=_cover_bg),
+        PageTemplate(id="main", frames=[frame], onPage=_bg),
+    ])
+
+    e: List[Any] = []
+    e.append(Spacer(1, 66 * mm))
+    e.append(Paragraph("CAREER BLUEPRINT AI", st["kicker"]))
+    e.append(Spacer(1, 4 * mm))
+    e.append(Paragraph(content.get("title", "Add-on Report"), st["cover_title"]))
+    e.append(Spacer(1, 8 * mm))
+    e.append(Paragraph(content.get("subtitle", ""), st["cover_sub"]))
+    e.append(Spacer(1, 8 * mm))
+    e.append(Paragraph(f"Prepared for <b>{name}</b>", st["cover_sub"]))
+    e.append(NextPageTemplate("main"))
+    e.append(PageBreak())
+
+    if content.get("intro"):
+        e.append(_card([Paragraph(content["intro"], st["bodyi"])], cw, pad=14,
+                       bg=HexColor("#EEF2FF"), border=HexColor("#C7D2FE")))
+        e.append(Spacer(1, 6 * mm))
+
+    for sec in content.get("sections", []):
+        e.append(Paragraph(sec.get("heading", ""), st["h2"]))
+        e.append(Spacer(1, 2 * mm))
+        if sec.get("type") == "list":
+            for it in sec.get("items", []):
+                e.append(Paragraph(f"&bull;&nbsp;&nbsp;{it}", st["body"]))
+                e.append(Spacer(1, 1.5 * mm))
+        else:
+            e.append(Paragraph(sec.get("text", ""), st["body"]))
+        e.append(Spacer(1, 6 * mm))
+
+    doc.build(e)
+    return buf.getvalue()
