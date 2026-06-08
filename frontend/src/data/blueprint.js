@@ -143,3 +143,80 @@ export const FAQS = [
   { q: "Does it work for working professionals and laid-off employees?", a: "Yes — there's a dedicated layoff survival engine, IT future report and career-switch engine for professionals." },
   { q: "What do I get for ₹199?", a: "A 12–15 page premium PDF with 16 chapters: reality check, top matches, careers to avoid, AI threat, salary projection, recovery roadmap and more." },
 ];
+
+const STUDENT_FEATURES = [
+  "Career Match Analysis",
+  "Top 5 Career Recommendations",
+  "Careers To Avoid",
+  "Salary Potential Forecast",
+  "AI Risk Analysis",
+  "Skill Development Roadmap",
+  "Learning Path",
+  "Future Self Letter",
+  "Industry Demand Forecast",
+];
+
+export const PLAN_CONFIG = {
+  student: {
+    key: "student",
+    name: "Student Career Blueprint",
+    price: 199,
+    original: 999,
+    headline: "Don't Waste 4 Years Preparing For The Wrong Career.",
+    subheadline: "Discover the path where your skills, interests and future opportunities align.",
+    perfectFor: ["School Students", "College Students", "Fresh Graduates"],
+    features: STUDENT_FEATURES,
+    ctaText: "Unlock My Student Career Blueprint",
+    footnote: "Less than the cost of one movie night.",
+  },
+  professional: {
+    key: "professional",
+    name: "Professional Career Intelligence Report",
+    price: 499,
+    original: 2499,
+    headline: "Is Your Career Future-Proof In The Age Of AI?",
+    subheadline: "Get a brutally honest analysis of your career growth, salary potential, AI risk and next best move.",
+    perfectFor: ["Working Professionals", "IT Employees", "Managers", "Career Switchers", "Freelancers", "Business Owners", "Laid-Off Employees"],
+    features: [
+      ...STUDENT_FEATURES,
+      "Career Growth Analysis",
+      "Promotion Readiness Score",
+      "Salary Growth Forecast",
+      "Industry Risk Assessment",
+      "AI Disruption Analysis",
+      "Layoff Risk Assessment",
+      "Career Switching Opportunities",
+      "Leadership Potential Analysis",
+      "Personal Branding Strategy",
+      "LinkedIn Optimization Guidance",
+      "Income Diversification Plan",
+      "Future Industry Forecast",
+      "Career Recovery Roadmap",
+      "30/90/180/365 Day Action Plan",
+    ],
+    ctaText: "Unlock My Professional Career Intelligence Report",
+    footnote: "One career mistake can cost years of lost income.",
+  },
+};
+
+export const COMPARISON = [
+  { feature: "Career Match Analysis", student: true, pro: true },
+  { feature: "Salary Forecast", student: true, pro: true },
+  { feature: "AI Risk Analysis", student: true, pro: true },
+  { feature: "Learning Roadmap", student: true, pro: true },
+  { feature: "Career Switching Plan", student: false, pro: true },
+  { feature: "Promotion Analysis", student: false, pro: true },
+  { feature: "Layoff Risk Assessment", student: false, pro: true },
+  { feature: "Leadership Potential", student: false, pro: true },
+  { feature: "Income Growth Strategy", student: false, pro: true },
+  { feature: "LinkedIn Strategy", student: false, pro: true },
+  { feature: "Personal Branding Plan", student: false, pro: true },
+  { feature: "Career Recovery Roadmap", student: false, pro: true },
+];
+
+export const UPSELLS = [
+  { title: "Resume Optimization Report", price: 299, icon: "FileText" },
+  { title: "LinkedIn Optimization Report", price: 299, icon: "Linkedin" },
+  { title: "Interview Preparation Blueprint", price: 499, icon: "MessageSquare" },
+  { title: "Complete Career Transformation Bundle", price: 999, icon: "Sparkles", best: true },
+];

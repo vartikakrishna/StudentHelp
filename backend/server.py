@@ -27,6 +27,18 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 PRICE_INR = 199
+STUDENT_PRICE = 199
+PRO_PRICE = 499
+STUDENT_TYPES = {"Student", "Fresher"}
+
+
+def plan_for(user_type: str):
+    """Returns (plan_key, amount_inr) based on user type."""
+    if (user_type or "").strip() in STUDENT_TYPES:
+        return "student", STUDENT_PRICE
+    return "professional", PRO_PRICE
+
+
 RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
 RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
 PAYMENT_MODE = 'live' if (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) else 'mock'
@@ -182,6 +194,7 @@ async def analyze(req: AnalyzeRequest):
     blueprint.update(enhanced)
     blueprint.update(build_engines(profile, blueprint))
 
+    plan, amount = plan_for(req.user_type)
     sub_id = str(uuid.uuid4())
     doc = {
         "id": sub_id, "name": req.name, "email": req.email, "phone": req.phone,
@@ -192,12 +205,13 @@ async def analyze(req: AnalyzeRequest):
         "interests": profile["interests"], "personality": profile["personality"], "goals": profile["goals"],
         "professional": {k: profile.get(k) for k in ["job_title", "years_experience", "industry", "previous_salary",
                                                       "reason_for_layoff", "skills", "certifications", "desired_industry", "remote_preference"]},
-        "report": blueprint, "paid": False, "payment_id": None, "amount": PRICE_INR,
+        "report": blueprint, "paid": False, "payment_id": None, "plan": plan, "amount": amount,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.submissions.insert_one(doc)
-    logger.info("New analysis: %s (%s) type=%s", req.name, sub_id, req.user_type)
-    return {"submission_id": sub_id, "name": req.name, "email": req.email, "phone": req.phone, "preview": build_preview(blueprint), "price": PRICE_INR}
+    logger.info("New analysis: %s (%s) type=%s plan=%s ₹%s", req.name, sub_id, req.user_type, plan, amount)
+    return {"submission_id": sub_id, "name": req.name, "email": req.email, "phone": req.phone,
+            "plan": plan, "price": amount, "preview": build_preview(blueprint)}
 
 
 @api_router.post("/create-order")
@@ -205,7 +219,8 @@ async def create_order(req: OrderRequest):
     sub = await db.submissions.find_one({"id": req.submission_id}, {"_id": 0})
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
-    amount_paise = PRICE_INR * 100
+    amount_paise = int(sub.get("amount", STUDENT_PRICE)) * 100
+    plan = sub.get("plan", "student")
 
     if PAYMENT_MODE == "live":
         import razorpay
@@ -213,12 +228,12 @@ async def create_order(req: OrderRequest):
         order = rzp.order.create({"amount": amount_paise, "currency": "INR", "payment_capture": 1,
                                   "receipt": f"cb_{req.submission_id[:30]}"})
         await db.submissions.update_one({"id": req.submission_id}, {"$set": {"order_id": order["id"]}})
-        return {"mode": "live", "key_id": RAZORPAY_KEY_ID, "order_id": order["id"], "amount": amount_paise,
+        return {"mode": "live", "key_id": RAZORPAY_KEY_ID, "order_id": order["id"], "amount": amount_paise, "plan": plan,
                 "currency": "INR", "name": sub["name"], "email": sub["email"], "phone": sub.get("phone", "")}
 
     order_id = f"order_mock_{uuid.uuid4().hex[:14]}"
     await db.submissions.update_one({"id": req.submission_id}, {"$set": {"order_id": order_id}})
-    return {"mode": "mock", "key_id": "rzp_test_mock", "order_id": order_id, "amount": amount_paise,
+    return {"mode": "mock", "key_id": "rzp_test_mock", "order_id": order_id, "amount": amount_paise, "plan": plan,
             "currency": "INR", "name": sub["name"], "email": sub["email"], "phone": sub.get("phone", "")}
 
 

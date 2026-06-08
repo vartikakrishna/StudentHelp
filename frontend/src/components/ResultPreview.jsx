@@ -5,6 +5,7 @@ import { Lock, Download, Sparkles, ArrowLeft, ShieldAlert, Gauge } from "lucide-
 import { PaymentModal } from "./PaymentModal";
 import { CTAButton } from "./CTAButton";
 import { pdfUrl } from "../lib/api";
+import { PLAN_CONFIG, COMPARISON, UPSELLS } from "../data/blueprint";
 
 const riskStyle = (label = "") => {
   if (label.includes("Very Low") || label === "Low Risk") return "bg-emerald-50 text-emerald-700 border-emerald-200";
@@ -49,6 +50,8 @@ const PreviewMatch = ({ m, rank }) => {
 
 export const ResultPreview = ({ result, onBack }) => {
   const { submission_id, preview } = result;
+  const plan = result.plan || (["Student", "Fresher"].includes(preview.user_type) ? "student" : "professional");
+  const isPro = plan === "professional";
   const [paid, setPaid] = useState(false);
   const [report, setReport] = useState(null);
   const [showPay, setShowPay] = useState(false);
@@ -108,7 +111,7 @@ export const ResultPreview = ({ result, onBack }) => {
           </div>
         </div>
 
-        {paid && report ? <FullReport report={report} submissionId={submission_id} /> : <LockedSection preview={preview} onUnlock={() => setShowPay(true)} />}
+        {paid && report ? <FullReport report={report} submissionId={submission_id} isPro={isPro} /> : <LockedSection plan={plan} onUnlock={() => setShowPay(true)} />}
       </div>
 
       {showPay && <PaymentModal submissionId={submission_id} name={result.name || "You"} email={result.email} phone={result.phone} onClose={() => setShowPay(false)} onSuccess={onSuccess} />}
@@ -123,26 +126,60 @@ const LockedRow = ({ label }) => (
   </div>
 );
 
-const LockedSection = ({ onUnlock }) => (
-  <div className="relative rounded-[2rem] glass-card overflow-hidden" data-testid="locked-section">
-    <div className="p-8">
-      <h3 className="font-head font-700 text-xl mb-4 text-slate-900">The other 90% of your Career Blueprint</h3>
-      <div className="grid sm:grid-cols-2 gap-x-10">
-        {["Top 5 careers to AVOID (and why)", "AI threat assessment per career", "10-year income projection", "Leadership & business potential",
-          "Career-switch opportunities + success odds", "Skill-gap analysis", "30/90/6-month/12-month learning plan", "Resume & LinkedIn strategy",
-          "Interview readiness plan", "Layoff recovery roadmap", "Future industry predictions", "Letter from your future self"].map((l) => <LockedRow key={l} label={l} />)}
-      </div>
-    </div>
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center p-6" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.45), rgba(255,255,255,0.95))", backdropFilter: "blur(4px)" }}>
-      <div className="w-16 h-16 rounded-2xl grad-primary flex items-center justify-center mb-4 glow-primary"><Lock className="w-8 h-8 text-white" strokeWidth={1.8} /></div>
-      <p className="font-head font-700 text-2xl sm:text-3xl text-slate-900">90% of Your Career Blueprint Is Locked</p>
-      <p className="text-slate-500 mt-2 mb-1 max-w-md">Unlock the full 16-chapter report — careers to avoid, AI threat, recovery roadmap & more.</p>
-      <p className="text-slate-400 text-sm mb-6"><span className="line-through">₹999</span> &nbsp;Today only <b className="text-purple-600">₹199</b></p>
-      <CTAButton testid="unlock-premium-btn" onClick={onUnlock}>Unlock My Career Blueprint · ₹199</CTAButton>
-      <p className="mt-3 text-xs text-slate-400 font-mono">One wrong career decision can cost years.</p>
+const Tick = ({ on }) => on
+  ? <Icons.Check className="w-4 h-4 text-emerald-500 mx-auto" strokeWidth={3} />
+  : <Icons.X className="w-4 h-4 text-slate-300 mx-auto" strokeWidth={3} />;
+
+const ComparisonTable = ({ plan }) => (
+  <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white" data-testid="comparison-table">
+    <div className="grid grid-cols-[1fr_auto_auto] text-xs font-mono">
+      <div className="px-4 py-3 bg-slate-50 font-bold text-slate-600">Feature</div>
+      <div className={`px-4 py-3 text-center font-bold ${plan === "student" ? "bg-purple-50 text-purple-700" : "bg-slate-50 text-slate-500"}`}>Student ₹199</div>
+      <div className={`px-4 py-3 text-center font-bold ${plan === "professional" ? "bg-purple-50 text-purple-700" : "bg-slate-50 text-slate-500"}`}>Pro ₹499</div>
+      {COMPARISON.map((row, i) => (
+        <React.Fragment key={row.feature}>
+          <div className={`px-4 py-2.5 text-slate-700 ${i % 2 ? "bg-slate-50/50" : ""}`}>{row.feature}</div>
+          <div className={`px-4 py-2.5 ${i % 2 ? "bg-slate-50/50" : ""}`}><Tick on={row.student} /></div>
+          <div className={`px-4 py-2.5 ${i % 2 ? "bg-slate-50/50" : ""}`}><Tick on={row.pro} /></div>
+        </React.Fragment>
+      ))}
     </div>
   </div>
 );
+
+const LockedSection = ({ plan, onUnlock }) => {
+  const cfg = PLAN_CONFIG[plan] || PLAN_CONFIG.student;
+  return (
+    <div data-testid="locked-section">
+      <div className="relative rounded-[2rem] glass-card overflow-hidden mb-8">
+        <div className="p-8">
+          <p className="font-mono text-xs tracking-[0.2em] uppercase text-purple-500 mb-2">{cfg.name}</p>
+          <h3 className="font-head font-700 text-xl mb-5 text-slate-900">Everything inside your {plan === "professional" ? "Professional Report" : "Student Blueprint"}</h3>
+          <div className="grid sm:grid-cols-2 gap-x-10">
+            {cfg.features.map((l) => <LockedRow key={l} label={l} />)}
+          </div>
+        </div>
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center p-6" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.45), rgba(255,255,255,0.95))", backdropFilter: "blur(4px)" }}>
+          <div className="w-16 h-16 rounded-2xl grad-primary flex items-center justify-center mb-4 glow-primary"><Lock className="w-8 h-8 text-white" strokeWidth={1.8} /></div>
+          <p className="font-head font-700 text-2xl sm:text-3xl text-slate-900 max-w-lg">{cfg.headline}</p>
+          <p className="text-slate-500 mt-2 mb-3 max-w-md">{cfg.subheadline}</p>
+          <p className="text-slate-400 text-sm mb-5"><span className="line-through">₹{cfg.original}</span> &nbsp;Today only <b className="text-purple-600 text-base">₹{cfg.price}</b></p>
+          <CTAButton testid="unlock-premium-btn" onClick={onUnlock}>{cfg.ctaText} · ₹{cfg.price}</CTAButton>
+          <p className="mt-3 text-xs text-slate-400 font-mono">{cfg.footnote}</p>
+        </div>
+      </div>
+
+      <div className="rounded-[2rem] glass-card p-6 sm:p-8">
+        <h3 className="font-head font-700 text-lg text-slate-900 mb-1 text-center">Compare your options</h3>
+        <p className="text-slate-500 text-sm text-center mb-6">Your plan: <b className="text-purple-600">{cfg.name} · ₹{cfg.price}</b></p>
+        <ComparisonTable plan={plan} />
+        <div className="text-center mt-6">
+          <CTAButton testid="unlock-premium-btn-2" onClick={onUnlock}>{cfg.ctaText} · ₹{cfg.price}</CTAButton>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Section = ({ icon, title, children }) => {
   const Icon = icon;
@@ -157,7 +194,7 @@ const Section = ({ icon, title, children }) => {
   );
 };
 
-const FullReport = ({ report, submissionId }) => {
+const FullReport = ({ report, submissionId, isPro }) => {
   const sp = report.salary_projection;
   const maxSalary = Math.max(...Object.values(sp));
   return (
@@ -218,7 +255,7 @@ const FullReport = ({ report, submissionId }) => {
 
       {/* Income + potential */}
       <Section icon={Icons.TrendingUp} title="Income Projection & Potential">
-        <div className="grid lg:grid-cols-2 gap-5">
+        <div className={`grid gap-5 ${isPro ? "lg:grid-cols-2" : ""}`}>
           <div className="rounded-3xl glass-card p-6">
             <h3 className="font-head font-700 text-lg mb-5 text-slate-900">Salary Projection (₹ LPA)</h3>
             <div className="flex items-end gap-4 h-44">
@@ -231,18 +268,20 @@ const FullReport = ({ report, submissionId }) => {
               ))}
             </div>
           </div>
-          <div className="rounded-3xl glass-card p-6">
-            <h3 className="font-head font-700 text-lg mb-5 text-slate-900">Your Potential Scores</h3>
-            {[["AI Resistance", report.ai_resistance_score], ["Leadership Potential", report.leadership_potential], ["Business Potential", report.business_potential], ["Personal Growth", report.personal_growth]].map(([l, v]) => (
-              <div key={l} className="mb-4"><div className="flex justify-between text-sm mb-1.5"><span className="text-slate-600">{l}</span><span className="font-mono text-purple-600">{v}%</span></div><ScoreBar value={v} /></div>
-            ))}
-            <p className="text-slate-600 text-sm mt-2">{report.entrepreneurship}</p>
-          </div>
+          {isPro && (
+            <div className="rounded-3xl glass-card p-6">
+              <h3 className="font-head font-700 text-lg mb-5 text-slate-900">Your Potential Scores</h3>
+              {[["AI Resistance", report.ai_resistance_score], ["Leadership Potential", report.leadership_potential], ["Business Potential", report.business_potential], ["Personal Growth", report.personal_growth]].map(([l, v]) => (
+                <div key={l} className="mb-4"><div className="flex justify-between text-sm mb-1.5"><span className="text-slate-600">{l}</span><span className="font-mono text-purple-600">{v}%</span></div><ScoreBar value={v} /></div>
+              ))}
+              <p className="text-slate-600 text-sm mt-2">{report.entrepreneurship}</p>
+            </div>
+          )}
         </div>
       </Section>
 
-      {/* Career switch */}
-      {report.career_switch?.targets?.length > 0 && (
+      {/* Career switch (PRO) */}
+      {isPro && report.career_switch?.targets?.length > 0 && (
         <Section icon={Icons.Repeat} title="Career Switch Opportunities">
           <div className="grid md:grid-cols-2 gap-4">
             {report.career_switch.targets.map((t, i) => (
@@ -272,8 +311,8 @@ const FullReport = ({ report, submissionId }) => {
         </Section>
       )}
 
-      {/* IT report */}
-      {report.it_report && (
+      {/* IT report (PRO) */}
+      {isPro && report.it_report && (
         <Section icon={Icons.Code} title="IT Employee Future Report">
           <div className="grid sm:grid-cols-3 gap-4">
             {[["Current Role Demand", report.it_report.current_role_demand], ["Future Demand", report.it_report.future_demand], ["Promotion Potential", report.it_report.promotion_potential], ["AI Risk", report.it_report.ai_risk], ["Salary Growth", report.it_report.salary_growth_potential]].map(([l, v]) => (
@@ -298,13 +337,15 @@ const FullReport = ({ report, submissionId }) => {
         </div>
       </Section>
 
-      {/* Resume + interview */}
-      <Section icon={Icons.FileText} title="Resume, LinkedIn & Interview Strategy">
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="rounded-2xl glass-card p-5"><p className="font-head font-700 text-slate-900 mb-1">Resume & LinkedIn</p><p className="text-slate-600 text-sm">{report.resume_linkedin}</p></div>
-          <div className="rounded-2xl glass-card p-5"><p className="font-head font-700 text-slate-900 mb-1">Interview Readiness</p><p className="text-slate-600 text-sm">{report.interview_readiness}</p></div>
-        </div>
-      </Section>
+      {/* Resume + interview (PRO) */}
+      {isPro && (
+        <Section icon={Icons.FileText} title="Resume, LinkedIn & Interview Strategy">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="rounded-2xl glass-card p-5"><p className="font-head font-700 text-slate-900 mb-1">Resume & LinkedIn</p><p className="text-slate-600 text-sm">{report.resume_linkedin}</p></div>
+            <div className="rounded-2xl glass-card p-5"><p className="font-head font-700 text-slate-900 mb-1">Interview Readiness</p><p className="text-slate-600 text-sm">{report.interview_readiness}</p></div>
+          </div>
+        </Section>
+      )}
 
       {/* Future industries */}
       {report.future_industries?.length > 0 && (
@@ -314,6 +355,24 @@ const FullReport = ({ report, submissionId }) => {
           </div>
         </Section>
       )}
+
+      {/* Upsells */}
+      <Section icon={Icons.Plus} title="Supercharge Your Career">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="upsells">
+          {UPSELLS.map((u) => {
+            const Icon = Icons[u.icon] || Icons.Sparkles;
+            return (
+              <div key={u.title} className={`relative rounded-2xl p-5 ${u.best ? "grad-primary text-white glow-primary" : "glass-card"}`} data-testid={`upsell-${u.price}`}>
+                {u.best && <span className="absolute top-3 right-3 text-[10px] font-mono bg-white/20 rounded-full px-2 py-0.5">BEST VALUE</span>}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${u.best ? "bg-white/20" : "grad-primary"}`}><Icon className="w-5 h-5 text-white" strokeWidth={1.8} /></div>
+                <p className={`font-head font-700 text-sm mb-1 ${u.best ? "text-white" : "text-slate-900"}`}>{u.title}</p>
+                <p className={`font-head font-800 text-2xl ${u.best ? "text-white" : "text-gradient"}`}>₹{u.price}</p>
+                <button className={`mt-3 w-full rounded-full py-2 text-sm font-medium transition ${u.best ? "bg-white text-purple-700 hover:scale-105" : "border border-purple-200 text-purple-700 hover:bg-purple-50"}`}>Add-on</button>
+              </div>
+            );
+          })}
+        </div>
+      </Section>
 
       {/* Future self letter */}
       <div className="rounded-[2rem] grad-primary p-8 mb-6 text-white glow-primary overflow-hidden relative">

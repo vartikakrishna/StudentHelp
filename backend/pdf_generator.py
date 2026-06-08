@@ -116,6 +116,7 @@ def build_pdf(submission: Dict[str, Any]) -> bytes:
     st = _styles()
     r = submission["report"]
     name = submission.get("name", "Student")
+    is_pro = submission.get("plan", "student") == "professional"
     cw = None
     buf = io.BytesIO()
 
@@ -247,25 +248,27 @@ def build_pdf(submission: Dict[str, Any]) -> bytes:
         e.append(Bar(min(100, sp[key]), width=cw, label=f"{label} — ₹{sp[key]} LPA", suffix="", color=CYAN))
         e.append(Spacer(1, 5 * mm))
     e.append(Spacer(1, 2 * mm))
-    for lab, v in [("Leadership Potential", r["leadership_potential"]), ("Business Potential", r["business_potential"]), ("Personal Growth", r["personal_growth"])]:
-        e.append(Bar(v, width=cw, label=lab, color=INDIGO))
-        e.append(Spacer(1, 4 * mm))
+    if is_pro:
+        for lab, v in [("Leadership Potential", r["leadership_potential"]), ("Business Potential", r["business_potential"]), ("Personal Growth", r["personal_growth"])]:
+            e.append(Bar(v, width=cw, label=lab, color=INDIGO))
+            e.append(Spacer(1, 4 * mm))
     e.append(PageBreak())
 
-    # CH8 + CH9
-    chapter(8, "Entrepreneurship Potential")
-    e.append(Bar(r["business_potential"], width=cw, label="Business Potential", color=PURPLE))
-    e.append(Spacer(1, 4 * mm))
-    e.append(Paragraph(r.get("entrepreneurship", ""), st["body"]))
-    e.append(Spacer(1, 6 * mm))
-    chapter(9, "Career Switch Opportunities")
-    for tgt in r.get("career_switch", {}).get("targets", [])[:4]:
-        inner = [Paragraph(f"<b>{tgt['title']}</b>", st["card_title"]), Spacer(1, 2),
-                 Paragraph(f"Difficulty: {tgt['difficulty']} · Time: {tgt['time_required']} · Impact: {tgt['salary_impact']} · Success: {tgt['success_probability']}", st["small"]),
-                 Spacer(1, 2), Paragraph("Skill gaps: " + ", ".join(tgt.get("skill_gaps", [])), st["small"])]
-        e.append(_card(inner, cw))
-        e.append(Spacer(1, 3 * mm))
-    e.append(PageBreak())
+    # CH8 + CH9 (Professional only)
+    if is_pro:
+        chapter(8, "Entrepreneurship Potential")
+        e.append(Bar(r["business_potential"], width=cw, label="Business Potential", color=PURPLE))
+        e.append(Spacer(1, 4 * mm))
+        e.append(Paragraph(r.get("entrepreneurship", ""), st["body"]))
+        e.append(Spacer(1, 6 * mm))
+        chapter(9, "Career Switch Opportunities")
+        for tgt in r.get("career_switch", {}).get("targets", [])[:4]:
+            inner = [Paragraph(f"<b>{tgt['title']}</b>", st["card_title"]), Spacer(1, 2),
+                     Paragraph(f"Difficulty: {tgt['difficulty']} · Time: {tgt['time_required']} · Impact: {tgt['salary_impact']} · Success: {tgt['success_probability']}", st["small"]),
+                     Spacer(1, 2), Paragraph("Skill gaps: " + ", ".join(tgt.get("skill_gaps", [])), st["small"])]
+            e.append(_card(inner, cw))
+            e.append(Spacer(1, 3 * mm))
+        e.append(PageBreak())
 
     # CH10 + CH11
     chapter(10, "Skill Gap Analysis")
@@ -282,16 +285,17 @@ def build_pdf(submission: Dict[str, Any]) -> bytes:
         e.append(Spacer(1, 3 * mm))
     e.append(PageBreak())
 
-    # CH12 + CH13
-    chapter(12, "Resume & LinkedIn Strategy")
-    e.append(Paragraph(r.get("resume_linkedin", ""), st["body"]))
-    e.append(Spacer(1, 6 * mm))
-    chapter(13, "Interview Readiness")
-    e.append(Paragraph(r.get("interview_readiness", ""), st["body"]))
+    # CH12 + CH13 (Professional only)
+    if is_pro:
+        chapter(12, "Resume & LinkedIn Strategy")
+        e.append(Paragraph(r.get("resume_linkedin", ""), st["body"]))
+        e.append(Spacer(1, 6 * mm))
+        chapter(13, "Interview Readiness")
+        e.append(Paragraph(r.get("interview_readiness", ""), st["body"]))
 
-    # CH14 (layoff) — conditional
+    # CH14 (layoff) — professional only
     layoff = r.get("layoff")
-    if layoff:
+    if is_pro and layoff:
         e.append(PageBreak())
         chapter(14, "Layoff Recovery Plan")
         for lab, v in [("Layoff Risk", layoff["layoff_risk_score"]), ("Recovery Score", layoff["recovery_score"]),

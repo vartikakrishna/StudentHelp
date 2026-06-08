@@ -88,7 +88,7 @@ export const PaymentModal = ({ submissionId, name, email, phone, onClose, onSucc
         </div>
 
         <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100 bg-indigo-50/40">
-          <div><p className="text-slate-600 text-sm">Full Career Blueprint (PDF)</p><p className="text-xs text-slate-400 font-mono">{name}</p></div>
+          <div><p className="text-slate-600 text-sm">{order?.plan === "professional" ? "Professional Career Intelligence Report" : "Student Career Blueprint"}</p><p className="text-xs text-slate-400 font-mono">{name}</p></div>
           <p className="font-head font-800 text-3xl text-gradient">₹{amount}</p>
         </div>
 
