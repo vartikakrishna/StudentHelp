@@ -6,6 +6,7 @@ from typing import Dict, List, Any
 from statistics import mean
 
 from careers import CAREER_BY_KEY, ai_risk_label, rank_careers, match_card, build_avoid_from_scored
+import career_db
 from common import (
     clamp, num, as_list, traits_from_personality, trait_labels,
     build_interest_norm, salary_projection, sec, diagnostic_sections, action_roadmap, growth_sp,
@@ -131,6 +132,14 @@ COLLEGES = {
     "generic": ["Top government college in your stream", "Reputed private with strong placements", "Prioritise internships + skills over brand name"],
 }
 
+# career_db domain -> COLLEGES bucket
+DB_DOMAIN_COLLEGE = {
+    "Technology": "tech", "Creative": "design", "Media": "media", "Business": "business",
+    "Finance": "finance", "Entrepreneurship": "business", "Healthcare": "medical",
+    "Legal": "law", "Government": "generic", "Defense": "generic", "Education": "education",
+    "Research": "generic", "Sports": "generic", "Skilled Trades": "generic", "Hospitality": "generic",
+}
+
 
 def analyze_student(profile: Dict[str, Any]) -> Dict[str, Any]:
     a, pers = _ans(profile), _pers(profile)
@@ -139,58 +148,92 @@ def analyze_student(profile: Dict[str, Any]) -> Dict[str, Any]:
     favorites = as_list(a.get("favorite_subjects"))
     interests = as_list(a.get("career_interests"))
     norm = build_interest_norm(favorites, interests, traits)
-    scored = rank_careers(norm, traits)
-    matches = [match_card(c, s) for c, s in scored[:5]]
-    avoid = build_avoid_from_scored(scored, 4)
+
+    dream_text = (a.get("dream_career") or "").strip()
+    parents = (a.get("parents_preferred") or "").strip()
+    gb = career_db.goal_block(dream_text, norm, traits, n_related=3)
+    dream = gb["dream"]
+
+    # Matches: dream/best-fit first, then related, then top overall fits (deduped)
+    matches = list(gb["matches"])
+    seen = {m["key"] for m in matches}
+    for c, s in career_db.rank_all(norm, traits, 10):
+        if len(matches) >= 5:
+            break
+        if c["key"] not in seen:
+            matches.append(career_db._card(c, s))
+            seen.add(c["key"])
     top = matches[0]
     top3 = matches[:3]
 
-    career_match = top["score"]
+    career_match = gb["dream_score"]
+    success = gb["success_probability"]
     ai_resistance = round(mean(m["ai_resistance"] for m in top3))
     personality_fit = int(clamp(round(60 + traits["leadership"] * 12 + (traits["analytical"] or traits["creative"]) * 10 + (career_match - 70) * 0.3), 45, 97))
     sp = salary_projection(top["salary"])
     ai_proof = sorted(matches, key=lambda m: m["ai_risk"])[:3]
+    avoid = career_db.avoid_block(norm, traits, gb.get("exclude"), 4)
 
     degrees = []
-    for m in top3:
-        for d in DEGREE_MAP.get(m["key"], []):
+    for m in [dream] + gb["related"]:
+        for d in (m.get("degrees") or []):
             if d not in degrees:
                 degrees.append(d)
-    domain = DOMAIN_OF.get(top["key"], "generic")
-    colleges = COLLEGES.get(domain, COLLEGES["generic"])
-    skills = top.get("learn_next", [])
+    degrees = degrees[:6]
+    colleges = COLLEGES.get(DB_DOMAIN_COLLEGE.get(dream["domain"], "generic"), COLLEGES["generic"])
+    skills = dream.get("skills") or dream.get("learn_next") or top.get("learn_next", [])
 
-    dream = (a.get("dream_career") or "").strip()
-    parents = (a.get("parents_preferred") or "").strip()
+    # Honesty Rule — keep the dream, show challenges + backups (never substitute)
+    dream_label = gb["career_title"] if gb["resolved"] else top["title"]
+    success_tone = "emerald" if (success or 0) >= 60 else "amber" if (success or 0) >= 40 else "rose"
+    risk_tone = "emerald" if dream["ai_risk"] <= 30 else "amber" if dream["ai_risk"] < 60 else "rose"
+    dream_cards = [{
+        "title": f"Your goal: {dream_label}",
+        "badges": [{"text": f"{career_match}% Dream Match", "tone": "indigo"},
+                   {"text": f"{success}% Success Odds", "tone": success_tone} if success else {"text": "Best-fit path", "tone": "indigo"},
+                   {"text": dream["ai_risk_label"], "tone": risk_tone},
+                   {"text": dream["verdict"], "tone": "purple"}],
+        "body": (f"You told us this is your dream — so we kept it front and centre. We won't swap it for a 'safer' job. "
+                 f"But honesty matters: here's exactly what makes it hard and what you must do to earn it." if gb["resolved"]
+                 else "Based on your subjects, interests and wiring, this is your strongest realistic direction."),
+        "points": gb["challenges"] or ["You're well-aligned — commit and start building proof."],
+    }]
+    if gb["related"]:
+        dream_cards.append({
+            "title": "Your backup plan — related careers in the same world",
+            "body": "If the dream proves too brutal, these keep you in the same field without starting from zero:",
+            "points": [f"{r['title']} — {r['score']}% fit · {r['ai_risk_label'].lower()} · ~₹{r['salary_mid']} LPA" for r in gb["related"]],
+        })
+
     mistakes = [{"title": x["title"], "badges": [{"text": x["ai_risk_label"], "tone": "rose"}],
                  "body": "Why avoid: " + "; ".join(x["why"])} for x in avoid[:3]]
-    if parents:
+    if parents and (not gb["resolved"] or parents.lower() not in dream_label.lower()):
         mistakes.append({"title": f"Blindly following '{parents}'", "badges": [{"text": "Parental pressure", "tone": "amber"}],
                          "body": "Your parents mean well, but a career that doesn't match your strengths and the market is a slow, expensive mistake. Use this data to have an honest conversation with them."})
-    if dream and dream.lower() not in top["title"].lower():
-        mistakes.append({"title": f"Chasing '{dream}' on hope alone", "badges": [{"text": "Reality check", "tone": "amber"}],
-                         "body": f"If '{dream}' is your dream, that's fine — but validate it against demand, competition and your actual strengths before committing years to it."})
 
-    reality = (f"{name}, here's the honest version. Based on your subjects, interests and how you're wired, "
-               f"your strongest realistic direction is {top['title']} ({career_match}% fit, {top['ai_risk_label'].lower()}). "
-               f"Stop trying to keep every option open — that's exactly how students waste 3-4 years. Pick a direction now, "
-               f"and use the next 12 months to build proof, not just marks.")
-    letter = (f"Dear {name},\n\nYears from now, you'll be glad you stopped guessing. You leaned into {top['title']}, chose the "
-              f"right degree instead of the 'safe' one everyone pushed, and started building skills while your friends were "
-              f"still confused. It wasn't always comfortable — but by your mid-20s you were earning around ₹{sp['year5']} LPA and "
-              f"doing work that actually fits you. This is where that decision begins. Choose. Commit. Start.\n\n— Your Future Self")
+    reality = (f"{name}, you said your dream is {dream_label}. Honest read: it's a {career_match}% match with a {success}% realistic "
+               f"success probability — {dream['verdict'].lower()}. I'm not going to talk you out of it, and I'm not going to pretend it's easy. "
+               f"The next 12 months decide it: build proof, not just marks, and keep a related backup alive so one setback doesn't end the dream."
+               if gb["resolved"] else
+               f"{name}, here's the honest version. Based on your subjects, interests and how you're wired, your strongest realistic direction "
+               f"is {top['title']} ({career_match}% fit, {top['ai_risk_label'].lower()}). Stop trying to keep every option open — that's exactly "
+               f"how students waste 3-4 years. Pick a direction now, and use the next 12 months to build proof, not just marks.")
+    letter = (f"Dear {name},\n\nYears from now, you'll be glad you stopped guessing. You committed to {dream_label}, did the brutal work others "
+              f"avoided, and started building skills while your friends were still confused. It wasn't always comfortable — but by your mid-20s "
+              f"you were earning around ₹{sp['year5']} LPA and doing work that actually fits you. This is where that decision begins. Choose. Commit. Start.\n\n— Your Future Self")
 
     meta = PROFILE_META["Student"]
     sections = [
         sec("reality_check", "Your Career Reality Check", "Gauge", "intro", text=reality),
         sec("snapshot", "Your Snapshot", "Activity", "scorecards", items=[
-            {"label": "Career Match", "value": career_match, "suffix": "%", "tone": "indigo", "caption": top["title"]},
+            {"label": "Dream Career Match", "value": career_match, "suffix": "%", "tone": "indigo", "caption": dream_label},
+            {"label": "Success Probability", "value": success or career_match, "suffix": "%", "tone": success_tone, "caption": "Realistic odds"},
             {"label": "AI Resistance", "value": ai_resistance, "suffix": "%", "tone": "emerald", "caption": "How future-proof"},
-            {"label": "Personality Fit", "value": personality_fit, "suffix": "%", "tone": "purple", "caption": "You + the path"},
         ]),
-        sec("matches", "Your Best-Fit Career Paths", "Target", "matches", items=matches),
+        sec("dream_verdict", "Your Dream Career — Honest Verdict", "Target", "cards", items=dream_cards),
+        sec("matches", "Your Dream + Best-Fit Paths", "Compass", "matches", items=matches),
         sec("degrees", "Best Degree & Stream Options", "BookOpen", "tags",
-            intro="Degrees that lead directly into your best-fit careers:", items=degrees or ["Pick a degree aligned to your top career above, not just the 'popular' one."]),
+            intro="Degrees that lead directly into your dream & best-fit careers:", items=degrees or ["Pick a degree aligned to your top career above, not just the 'popular' one."]),
         sec("demand", "Future Industry Demand", "TrendingUp", "bars",
             items=[{"label": m["title"], "value": m["market_demand"], "suffix": "%", "tone": "indigo"} for m in top3]),
         sec("ai_proof", "AI-Proof Career Options", "ShieldCheck", "cards",
@@ -200,7 +243,7 @@ def analyze_student(profile: Dict[str, Any]) -> Dict[str, Any]:
         sec("skills", "Skills To Start Learning Now", "Wrench", "list",
             intro="Don't wait for college. Start these now:", items=skills),
         sec("learning_roadmap", "Your Learning Roadmap", "Map", "roadmap", items=[
-            {"phase": "Next 6 Months", "focus": "Explore & prove interest", "points": [f"Try a free intro course in {skills[0] if skills else top['title']}", "Build one tiny project / portfolio piece", "Talk to 2 people already in this field"]},
+            {"phase": "Next 6 Months", "focus": "Explore & prove interest", "points": [f"Try a free intro course in {skills[0] if skills else dream_label}", "Build one tiny project / portfolio piece", "Talk to 2 people already in this field"]},
             {"phase": "This Year", "focus": "Build foundations", "points": [f"Go deeper on {', '.join(skills[1:3]) if len(skills) > 2 else 'core skills'}", "Target the right degree & entrance exams", "Maintain marks but prioritise skills"]},
             {"phase": "Before College", "focus": "Lock your direction", "points": ["Shortlist colleges aligned to your path", "Prepare entrance strategy", "Build a simple portfolio / GitHub / profile"]},
             {"phase": "First Year of College", "focus": "Get ahead of peers", "points": ["Start internships early", "Join communities & competitions", "Keep compounding your top skill"]},
@@ -208,38 +251,39 @@ def analyze_student(profile: Dict[str, Any]) -> Dict[str, Any]:
         sec("growth", "10-Year Growth Projection", "LineChart", "salary_chart",
             points=[{"label": "Start", "value": sp["year1"]}, {"label": "Year 3", "value": sp["year3"]},
                     {"label": "Year 5", "value": sp["year5"]}, {"label": "Year 10", "value": sp["year10"]}],
-            note=f"Projected earning trajectory on the {top['title']} path (₹ LPA)."),
+            note=f"Projected earning trajectory on the {dream_label} path (₹ LPA)."),
         sec("colleges", "College & Prep Recommendations", "Building", "list", intro="Where & how to aim:", items=colleges),
         *diagnostic_sections(
             risks=[
                 {"title": f"Drifting toward {avoid[0]['title']}", "badges": [{"text": avoid[0]["ai_risk_label"], "tone": "rose"}], "body": "A weak-fit, high-competition path quietly wastes your most valuable years."},
                 {"title": "Following pressure, not fit", "badges": [{"text": "Common trap", "tone": "amber"}], "body": "Choosing a career to please others or chase prestige is the #1 regret students have years later."},
-                {"title": "Staying undecided", "badges": [{"text": "Costly", "tone": "amber"}], "body": "Keeping every option open feels safe, but it means you build real depth in nothing."}],
+                {"title": "Chasing the dream with zero backup", "badges": [{"text": "Costly", "tone": "amber"}], "body": "Going all-in with no related fallback means one setback can end the dream. Keep a backup alive."}],
             opportunities=[
                 {"title": f"Lean into {ai_proof[0]['title']}", "body": f"An AI-resistant, well-matched path ({ai_proof[0]['ai_risk_label']}) — start early and you'll be years ahead of peers."},
                 {"title": "Build skills before college", "body": "Most students wait. The ones who start projects and skills now enter college already ahead."},
                 {"title": "Early internships & communities", "body": "Real exposure beats theory — it compounds into clarity and opportunities."}],
-            focus=["Commit to one clear career direction", f"Start learning {skills[0] if skills else 'your top skill'}", "Plan the right degree & entrance strategy", "Build one project or join a community"],
+            focus=[f"Commit to {dream_label} and build proof", f"Start learning {skills[0] if skills else 'your top skill'}", "Plan the right degree & entrance strategy", "Keep one related backup career alive"],
             stop=["Keeping every option open out of fear", "Choosing a path only for prestige or pressure", "Chasing marks while ignoring real skills", "Comparing your start to everyone else's"]),
         action_roadmap(
-            {"focus": "Explore with intent", "points": [f"Try a free intro to {skills[0] if skills else 'your top field'}", "Talk to 2 people in that career", "Pick your direction"]},
+            {"focus": "Explore with intent", "points": [f"Try a free intro to {skills[0] if skills else dream_label}", "Talk to 2 people in that career", "Confirm your direction"]},
             {"focus": "Build foundations", "points": ["Start core skills + entrance prep", "Ship one small project", "Maintain marks without obsessing"]},
             {"focus": "Commit & get ahead", "points": ["Lock your degree & college shortlist", "Build a simple portfolio/profile", "Start early internships / competitions"]}),
         sec("letter", "A Letter From Your Future Self", "Mail", "letter", text=letter),
     ]
     preview = _preview(meta, f"{name}, your clearest career direction is ready.",
-                       f"Your strongest path: {top['title']} ({career_match}% fit).",
-                       "Career discovery report — best-fit paths, the right degree, AI-proof options and a 10-year plan.",
-                       [{"label": "Career Match", "value": career_match, "suffix": "%", "locked": False},
+                       f"Your dream — {dream_label} — is a {career_match}% match ({dream['verdict'].lower()}).",
+                       "Career discovery report — your dream career verdict, related backups, the right degree, AI-proof options and a 10-year plan.",
+                       [{"label": "Dream Career Match", "value": career_match, "suffix": "%", "locked": False},
                         {"label": "Personality Fit", "value": personality_fit, "suffix": "%", "locked": False},
-                        {"label": "AI Resistance Score", "locked": True},
-                        {"label": "Best Career Path", "locked": True},
+                        {"label": "Success Probability", "locked": True},
+                        {"label": "Related Backup Careers", "locked": True},
                         {"label": "Future Income Potential", "locked": True},
                         {"label": "10-Year Salary Forecast", "locked": True}])
 
     return _wrap(profile, meta, reality, sections, preview, matches, skills, sp,
                  extra={"ai_resistance_score": ai_resistance, "career_match": career_match,
-                        "ai_focus": "career discovery for a student: be honest about best-fit paths, the right degree, and avoiding pressure-driven mistakes",
+                        "dream_career": dream_label, "dream_match_score": career_match, "success_probability": success,
+                        "ai_focus": "career discovery for a student: HONOR the stated dream career as #1, never substitute it; be brutally honest about its challenges, give a realistic success probability and related backup careers",
                         "leadership_potential": int(clamp(round(traits["leadership"] * 100), 20, 95))})
 
 
@@ -522,6 +566,20 @@ def analyze_fresher(profile):
     sp = growth_sp(base)
     exp = num(a.get("expected_salary"), 0)
 
+    # Future-Goal engine: resolve the fresher's dream/target role + related entry roles
+    target_text = (a.get("target_role") or "").strip()
+    matches = []
+    target_section = None
+    if target_text:
+        norm = build_interest_norm([], [], traits)
+        tgt = career_db.goal_block(target_text, norm, traits, n_related=3)
+        matches = tgt["matches"]
+        if tgt["resolved"]:
+            tc = tgt["dream"]
+            need = [s for s in (tc.get("skills") or []) if all(s.lower() not in x.lower() and x.lower() not in s.lower() for x in skills)]
+            gaps = (need + gaps)[:6]
+        target_section = sec("target_direction", f"Your Target Role: {tgt.get('career_title', target_text)}", "Compass", "matches", items=matches)
+
     reality = (f"{name}, blunt truth: companies don't hire potential, they hire proof. Your employability sits at {employability}% — "
                f"{'you have real signal, now convert it into offers' if employability >= 60 else 'right now your profile looks like every other fresher, and that is the problem'}. "
                f"{'Your resume isn’t ready, which means recruiters are filtering you out before a human reads it. ' if resume < 60 else ''}"
@@ -539,6 +597,7 @@ def analyze_fresher(profile):
             {"label": "Skills depth", "value": int(skillcount), "suffix": "%", "tone": "cyan"},
             {"label": "Resume & LinkedIn", "value": int((resume + linkedin) / 2), "suffix": "%", "tone": "amber"}]),
         sec("gaps", "Your Skill Gaps", "Puzzle", "tags", intro="Close these to clear the first filter:", items=gaps or ["Your basics are solid — now build proof through projects."]),
+        *( [target_section] if target_section else [] ),
         *diagnostic_sections(
             risks=[
                 {"title": "Resume gets auto-rejected", "badges": [{"text": "High impact", "tone": "rose"}], "body": "No ATS-ready resume means you never reach a human. This is the #1 silent killer for freshers."},
@@ -569,8 +628,8 @@ def analyze_fresher(profile):
                         {"label": "Employability", "value": employability, "suffix": "%", "locked": False},
                         {"label": "Interview Readiness", "locked": True}, {"label": "Skill Gaps", "locked": True},
                         {"label": "Salary Projection", "locked": True}, {"label": "First-Job Strategy", "locked": True}])
-    return _wrap(profile, meta, reality, sections, preview, [], gaps, sp,
-                 extra={"ai_focus": "first-job employability: be blunt about why a fresher gets filtered out and the fastest path to a real offer",
+    return _wrap(profile, meta, reality, sections, preview, matches, gaps, sp,
+                 extra={"ai_focus": "first-job employability: be blunt about why a fresher gets filtered out and the fastest path to a real offer. If a target role is given, honor it and recommend related entry roles",
                         "career_match": employability, "ai_resistance_score": 75})
 
 
@@ -599,6 +658,15 @@ def analyze_switcher(profile):
     sp = growth_sp(base)
     gaps = ["Core skills for " + target, "A portfolio in the new field", "Network in the target industry", "Proof of capability (project/freelance)", "Domain vocabulary & tools"]
 
+    # Future-Goal engine: resolve the target profession + related bridge careers (Honesty Rule)
+    norm = build_interest_norm([], [], traits)
+    tgt = career_db.goal_block(target, norm, traits, n_related=4)
+    matches = tgt["matches"]
+    if tgt["resolved"]:
+        tc = tgt["dream"]
+        gaps = (tc.get("skills") or [])[:4] + ["A portfolio/freelance proof in " + tc["title"], "Network in the target industry"]
+        target = tc["title"]
+
     reality = (f"{name}, honest assessment: switching from {current} to {target} is {'very doable' if feasibility >= 70 else 'realistic but hard' if feasibility >= 50 else 'an uphill climb'} "
                f"({feasibility}% feasibility). The market doesn't reward intention — it rewards proof in the new field. "
                f"{'Your runway is thin, so speed and a bridge income matter. ' if runway < 50 else ''}You'll switch on the strength of transferable skills + visible projects, not a fresh start from zero.")
@@ -615,6 +683,7 @@ def analyze_switcher(profile):
             {"label": "Financial runway", "value": runway, "suffix": "%", "tone": "cyan"},
             {"label": "Risk appetite", "value": int(traits["risk"] * 100), "suffix": "%", "tone": "amber"}]),
         sec("transfer", "Your Transferable Advantages", "Recycle", "tags", intro="Lean on these to switch faster:", items=transfer or ["Identify and document the skills that carry over — communication, analysis, domain knowledge."]),
+        sec("target_direction", f"Your Target Direction: {target}", "Compass", "matches", items=matches),
         sec("gaps", "Skill Gaps To Close", "Puzzle", "tags", intro=f"What {target} demands that you must build:", items=gaps),
         *diagnostic_sections(
             risks=[
@@ -646,8 +715,8 @@ def analyze_switcher(profile):
                         {"label": "Difficulty", "value": difficulty, "suffix": "%", "locked": False},
                         {"label": "Success Probability", "locked": True}, {"label": "Transition Timeline", "locked": True},
                         {"label": "Skill Gaps", "locked": True}, {"label": "Salary Impact", "locked": True}])
-    return _wrap(profile, meta, reality, sections, preview, [], gaps, sp,
-                 extra={"ai_focus": f"career switch from {current} to {target}: be honest about feasibility, the proof needed, and the fastest low-risk path",
+    return _wrap(profile, meta, reality, sections, preview, matches, gaps, sp,
+                 extra={"ai_focus": f"career switch from {current} to {target}: be honest about feasibility, the proof needed, and the fastest low-risk path. Keep the user's target field — recommend RELATED bridge roles, never an unrelated substitute",
                         "career_match": feasibility, "ai_resistance_score": 72})
 
 

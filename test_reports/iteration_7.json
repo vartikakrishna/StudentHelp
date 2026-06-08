@@ -1,0 +1,24 @@
+{
+  "summary": "Validated the new Future Goal / Dream Career engine via 17 backend pytest cases (all PASSED in 6.65s) + a real-UI Student funnel against REACT_APP_BACKEND_URL with mock Razorpay. Student dream 'Game Developer' is pinned #1 (86% Dream Career Match, 64% Success Probability) in both preview and full report; 'Your Dream Career — Honest Verdict' card with 'Your goal: Game Developer' and a 'Your backup plan — related careers in the same world' listing Gameplay Programmer / Unity Developer / Unreal Developer (~₹16 LPA each). 'Data Entry' never appears. Hard-dream case (Doctor with 50-60% marks) keeps Doctor pinned with brutal challenges. Career Switcher target_direction = Data Analyst as top card. Fresher target_direction = Data Scientist (not Research Scientist). Regression: all 9 user types produce valid sectioned reports + downloadable PDFs (>4KB, content-type application/pdf) via /api/analyze → /api/create-order → /api/verify-payment → /api/report/{id}/pdf.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_dream_engine.py",
+    "/app/test_reports/pytest/dream_engine_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PaymentModal still ships two 'pay-now-btn' data-testid elements (live vs mock) — split into pay-now-live-btn / pay-now-mock-btn to remove the need to disambiguate by 'Securely' text (recurring callout).",
+    "ResultPreview.jsx still mixes preview/paywall/FullReport/upsells in one ~210-LOC file; consider extracting FullReport + Upsells (recurring callout).",
+    "Frontend About step inputs (Full Name / Email) lack data-testid attributes — selectors had to fall back to input nth() / type=email. Add data-testid='about-name-input' and 'about-email-input' for stable tests.",
+    "career_db.resolve_career() now ordered so exact titles beat alias substrings — verified Data Scientist vs Research Scientist, and dream is never replaced. Honesty Rule enforced server-side."
+  ],
+  "updated_files": ["/app/backend/tests/test_dream_engine.py", "/app/test_reports/iteration_7.json"],
+  "success_rate": {"backend": "100% (17/17 pytest)", "frontend": "100% (Student Game Developer funnel)"},
+  "test_credentials": "n/a — public funnel, MOCK Razorpay (button text 'Securely').",
+  "seed_data_creation": "Created ~12 submissions: 1 UI Student (qa.gd@test.com) + 11 backend (Student GD, Student Doctor hard, Switcher → Data Analyst, Fresher → Data Scientist, plus all 9 regression cases).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Bug fix verified end-to-end. Run `pytest backend/tests/test_dream_engine.py` (needs REACT_APP_BACKEND_URL env). Sections to look for: dream_verdict (Student), target_direction (Switcher, Fresher with target_role), matches (Student includes Game Developer #1). Frontend headers to assert: 'Dream Career Match', 'Success Probability', 'Your Dream Career — Honest Verdict', 'Your goal: <Dream>', 'Your backup plan — related careers in the same world'. Mock pay path: Unlock CTA → button:has-text('Securely').",
+  "rca of the issue": "Previous bias in matches() leaked unrelated jobs (e.g. Data Entry) into the Student dream slot. Fix: career_db.goal_block() now resolves the user's dream/target via resolve_career() and PINS it at #1 with a dedicated dream_verdict section (goal card + related backups from the same cluster + challenges). type_engines.analyze_student / analyze_switcher / analyze_fresher consume goal_block. ai_engine.SYSTEM enforces an HONESTY RULE so LLM polishing can never overwrite the dream. Verified: Game Developer 86% match with Gameplay Programmer / Unity / Unreal as backups, zero Data Entry leakage."
+}

@@ -161,6 +161,7 @@ export const QUESTIONNAIRES = {
     { id: "jobreadiness", title: "Your job search", subtitle: "Be honest — this drives your employability score.", fields: [
       { key: "resume_ready", label: "Resume Prepared?", type: "select", options: RESUME_OPTS, required: true, half: true },
       { key: "linkedin", label: "LinkedIn Profile?", type: "select", options: YESNO, half: true },
+      { key: "target_role", label: "Your Dream / Target Role", type: "text", placeholder: "e.g. Data Analyst, Game Developer", half: true },
       { key: "expected_salary", label: "Expected Salary (₹ LPA)", type: "number", placeholder: "e.g. 6", half: true },
       { key: "job_preference", label: "Job Preference", type: "select", options: JOBPREF, half: true } ] },
   ],

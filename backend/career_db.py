@@ -274,7 +274,7 @@ ALIASES = {
     "ar vr": "ar_vr_developer", "vr developer": "ar_vr_developer", "metaverse": "ar_vr_developer",
     "swe": "software_engineer", "software developer": "software_engineer", "programmer": "software_engineer", "coder": "software_engineer", "developer": "software_engineer",
     "ai engineer": "ai_ml_engineer", "ml engineer": "ai_ml_engineer", "machine learning": "ai_ml_engineer", "ai": "ai_ml_engineer", "data science": "data_scientist", "ds": "data_scientist",
-    "ui ux": "ux_designer", "ux": "ux_designer", "ui designer": "ui_designer", "product designer": "product_designer", "designer": "graphic_designer",
+    "ui ux": "ux_designer", "ux": "ux_designer", "ui ux designer": "ux_designer", "ux designer": "ux_designer", "ui designer": "ui_designer", "product designer": "product_designer", "designer": "graphic_designer",
     "youtuber": "youtuber", "content creator": "content_creator", "influencer": "influencer_creator", "blogger": "content_creator", "writer": "author_novelist", "author": "author_novelist",
     "film director": "filmmaker_director", "director": "filmmaker_director", "actor": "filmmaker_director", "editor": "video_editor", "video editor": "video_editor",
     "singer": "music_producer", "musician": "music_producer", "music": "music_producer", "dj": "music_producer",
@@ -306,19 +306,22 @@ def resolve_career(text: str) -> Tuple[Optional[Dict[str, Any]], float]:
     if not text:
         return None, 0.0
     t = text.strip().lower()
-    # 1) alias exact / substring
+    # 1) exact alias / exact title (highest confidence, beats greedy substrings)
     if t in ALIASES and ALIASES[t] in CAREER_BY_KEY:
         return CAREER_BY_KEY[ALIASES[t]], 1.0
-    for phrase, key in ALIASES.items():
-        if phrase in t and key in CAREER_BY_KEY:
-            return CAREER_BY_KEY[key], 0.95
-    # 2) exact / substring title
     if t in _TITLE_INDEX:
         return CAREER_BY_KEY[_TITLE_INDEX[t]], 1.0
-    for title_l, key in _TITLE_INDEX.items():
-        if t in title_l or title_l in t:
-            return CAREER_BY_KEY[key], 0.9
-    # 3) token overlap
+    # 2) substring alias — prefer the LONGEST matching phrase (avoids 'scientist' eating 'data scientist')
+    alias_hits = [(phrase, key) for phrase, key in ALIASES.items() if phrase in t and key in CAREER_BY_KEY]
+    if alias_hits:
+        phrase, key = max(alias_hits, key=lambda x: len(x[0]))
+        return CAREER_BY_KEY[key], 0.95
+    # 3) substring title — prefer the longest matching title
+    title_hits = [(tl, key) for tl, key in _TITLE_INDEX.items() if t in tl or tl in t]
+    if title_hits:
+        tl, key = max(title_hits, key=lambda x: len(x[0]))
+        return CAREER_BY_KEY[key], 0.9
+    # 4) token overlap
     ut = _tokens(t)
     if not ut:
         return None, 0.0
@@ -377,3 +380,130 @@ def success_probability(career, norm, traits):
     s = 100 * (0.35 * aptitude + 0.20 * market + 0.15 * (1 - career["competition"] / 100.0) +
                0.15 * (1 - career["difficulty"] / 100.0) + 0.15 * grit)
     return int(max(28, min(95, round(s))))
+
+
+# ============================================================
+# FUTURE-GOAL ENGINE — pin the user's stated goal (Honesty Rule),
+# recommend RELATED careers, never a generic substitute.
+# ============================================================
+from careers import ai_risk_label  # noqa: E402  (careers never imports career_db → no cycle)
+
+
+def _verdict(score: int, c: Dict[str, Any]) -> str:
+    if score >= 78 and c["ai_risk"] <= 45:
+        return "Strong fit — go for it with conviction"
+    if score >= 64:
+        return "Workable fit — realistic if you commit"
+    if score >= 52:
+        return "Stretch — possible, but eyes open"
+    return "Hard path — achievable, but brutal. Keep a backup running"
+
+
+def _card(c: Dict[str, Any], score: int) -> Dict[str, Any]:
+    """Build a renderer-compatible match card from a career_db career."""
+    return {
+        "key": c["key"], "title": c["title"], "icon": c["icon"], "tagline": c["tagline"],
+        "score": score, "suitability": score,
+        "market_demand": c["market_demand"], "salary_score": c["salary_score"],
+        "competition": c["competition"], "ai_risk": c["ai_risk"],
+        "ai_risk_label": ai_risk_label(c["ai_risk"]), "ai_resistance": 100 - c["ai_risk"],
+        "difficulty": c["difficulty"], "time_to_enter": c["time_to_enter"],
+        "salary": c["salary"], "salary_mid": c["salary"]["mid"], "growth": c["growth"],
+        "industries": c["industries"], "learn_next": c.get("learn_next", []),
+        "domain": c["domain"], "cluster": c["cluster"], "skills": c.get("skills", []),
+        "degrees": c.get("degrees", []), "verdict": _verdict(score, c),
+    }
+
+
+def fit_score(c: Dict[str, Any], norm: Dict[str, float], traits: Dict[str, float]) -> int:
+    """General best-fit score (no dream component) — used to rank related/overall careers."""
+    interest = _interest_fit(c, norm)
+    aptitude = min(1.0, interest * 0.85 + 0.15)
+    personality = _personality_fit(c, traits)
+    market = c["market_demand"] / 100.0
+    return int(max(40, min(98, round(100 * (0.34 * interest + 0.26 * aptitude + 0.20 * personality + 0.20 * market)))))
+
+
+def rank_all(norm: Dict[str, float], traits: Dict[str, float], n: int = 6, exclude=None):
+    exclude = exclude or set()
+    scored = [(c, fit_score(c, norm, traits)) for c in CAREERS if c["key"] not in exclude]
+    scored.sort(key=lambda x: x[1], reverse=True)
+    return scored[:n]
+
+
+def challenges_for(c, dscore, success, norm, traits) -> List[str]:
+    """Honesty Rule: brutal-but-specific challenges of chasing THIS career."""
+    out = []
+    if c["competition"] >= 78:
+        out.append(f"Brutal competition ({c['competition']}/100) — only consistent top performers break in.")
+    if c["difficulty"] >= 78:
+        out.append(f"Steep difficulty ({c['difficulty']}/100) — expect {c['time_to_enter']} of serious effort before real traction.")
+    if _interest_fit(c, norm) < 0.5:
+        out.append("Your current subjects/interests don't strongly point here yet — you'll build from a weaker base.")
+    if c.get("t") and _personality_fit(c, traits) < 0.45:
+        out.append("Your personality profile isn't a natural match — doable, but it will cost you more energy.")
+    if success < 55:
+        out.append(f"Realistic success probability is {success}% — high risk, so run a backup in parallel.")
+    if c["ai_risk"] >= 55:
+        out.append(f"{ai_risk_label(c['ai_risk'])} of AI disruption — you must own the AI-proof edge of this field.")
+    if c["salary"]["entry"] <= 3:
+        out.append(f"Low early pay (~₹{c['salary']['entry']} LPA to start) — plan finances for a slow ramp.")
+    if not out:
+        out.append("You're well-aligned — the real risk now is hesitation. Commit and start building proof.")
+    return out[:4]
+
+
+def avoid_block(norm, traits, exclude_keys, limit: int = 4):
+    exclude_keys = exclude_keys or set()
+    scored = []
+    for c in CAREERS:
+        if c["key"] in exclude_keys:
+            continue
+        suit = fit_score(c, norm, traits)
+        avoid_score = (100 - suit) * 0.4 + c["ai_risk"] * 0.35 + c["competition"] * 0.1 + (100 - c["market_demand"]) * 0.15
+        scored.append((c, suit, avoid_score))
+    scored.sort(key=lambda x: x[2], reverse=True)
+    out = []
+    for c, suit, _ in scored[:limit]:
+        reasons = []
+        if c["ai_risk"] >= 55:
+            reasons.append(f"{ai_risk_label(c['ai_risk'])} — automation is shrinking this field")
+        if suit < 55:
+            reasons.append("weak alignment with your strengths")
+        if c["competition"] >= 80:
+            reasons.append("brutal competition for limited seats")
+        if c["market_demand"] <= 55:
+            reasons.append("soft / declining demand")
+        if not reasons:
+            reasons.append("better-aligned options exist for your profile")
+        out.append({"title": c["title"], "icon": c["icon"], "ai_risk": c["ai_risk"],
+                    "ai_risk_label": ai_risk_label(c["ai_risk"]), "market_demand": c["market_demand"],
+                    "competition": c["competition"], "suitability": suit, "why": reasons[:2]})
+    return out
+
+
+def goal_block(goal_text: str, norm: Dict[str, float], traits: Dict[str, float], n_related: int = 3) -> Dict[str, Any]:
+    """Future-Goal engine. Resolves the user's stated goal/dream, KEEPS it as #1
+    (Honesty Rule — never substituted), adds related cluster careers as backups,
+    and an honest challenges read. Falls back to best-fit ranking if unresolved."""
+    career, conf = resolve_career(goal_text or "")
+    if not career:
+        ranked = rank_all(norm, traits, 5)
+        cards = [_card(c, s) for c, s in ranked]
+        return {"resolved": False, "goal_text": (goal_text or "").strip(),
+                "dream": cards[0] if cards else None, "dream_score": cards[0]["score"] if cards else 0,
+                "success_probability": None, "matches": cards, "related": cards[1:4],
+                "challenges": [], "exclude": {c["key"] for c, _ in ranked}}
+    dscore = dream_match(career, norm, traits, dream_clarity=max(conf, 0.85))
+    success = success_probability(career, norm, traits)
+    dream = _card(career, dscore)
+    dream["is_dream"] = True
+    dream["success_probability"] = success
+    rel = related_careers(career, 7)
+    rel_scored = sorted([(c, fit_score(c, norm, traits)) for c in rel], key=lambda x: x[1], reverse=True)
+    related = [_card(c, s) for c, s in rel_scored[:n_related]]
+    exclude = {career["key"]} | {r["key"] for r in related}
+    return {"resolved": True, "goal_text": (goal_text or "").strip(), "career_title": career["title"],
+            "dream": dream, "dream_score": dscore, "success_probability": success,
+            "matches": [dream] + related, "related": related,
+            "challenges": challenges_for(career, dscore, success, norm, traits), "exclude": exclude}
