@@ -32,15 +32,21 @@ def _extract_json(text: str) -> Dict[str, Any]:
     return json.loads(text)
 
 
+def _article(word: str) -> str:
+    return "an" if word[:1].lower() in "aeiou" else "a"
+
+
 def _fallback(profile: Dict[str, Any], blueprint: Dict[str, Any]) -> Dict[str, Any]:
     name = profile.get("name", "there").split(" ")[0]
     top = blueprint["matches"][0]
     second = blueprint["matches"][1]
     traits = blueprint["trait_labels"]
     sp = blueprint["salary_projection"]
+    approach = traits[1].lower()
+    role = traits[3].lower()
     return {
         "personality_insight": (
-            f"You are a {traits[1].lower()} with the instincts of a {traits[3].lower()}. "
+            f"You are {_article(approach)} {approach} with the instincts of {_article(role)} {role}. "
             f"That rare combination means you don't just follow paths \u2014 you tend to redesign them. "
             f"Your decisions are driven by {('impact and people' if traits[0].startswith('Extro') else 'depth and mastery')}."
         ),
