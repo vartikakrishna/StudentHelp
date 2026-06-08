@@ -100,15 +100,15 @@ export const Hero = ({ onStart }) => (
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}
           className="font-head font-800 tracking-tight leading-[1.05] text-4xl sm:text-5xl lg:text-6xl text-slate-900"
         >
-          Your Future Is <span className="text-gradient">Too Important</span> To Leave To Guesswork.
+          Most People Waste Years Following The <span className="text-gradient">Wrong Career Path.</span>
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25 }}
           className="mt-6 text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed"
         >
-          In just 5 minutes, discover the career path that matches your personality, strengths,
-          interests and future market demand — before you waste years on the wrong one.
+          Discover where your strengths, personality, market demand, AI trends and income
+          potential truly align — a brutally honest career truth report, not a motivation test.
         </motion.p>
 
         <motion.div

@@ -1,0 +1,35 @@
+{
+  "summary": "Full E2E retest of Career Blueprint AI (honesty-engine expansion). Expanded pytest suite to 15 tests (100% pass) covering /api/regret, Student vs Laid-Off /api/analyze, careers_to_avoid, ai_threat_examples, learning_plans/career_switch/regret keys, mock create-order, verify-payment unlock, paid PDF (returns application/pdf and starts with %PDF), 402 before payment, Laid-Off report must contain 'layoff' AND 'it_report' sections. Frontend Playwright run: landing hero + regret calculator works (₹375 LPA-years for 25/5/30 inputs, /api/regret 200). Full STUDENT funnel start->user-type->about (validation)->background->interests(16 sliders)->personality(validation+5 binaries)->goals(validation+priority+income30+challenge)->Generate->result-page->success-score+locked-section with '999' and '199' strings->unlock-premium-btn->razorpay-mock-modal->pay-now-btn->full-report. Full report contained Careers To Avoid, AI Threat, Income, Career Switch, Skill Gap, Future Self, Resume, Interview, Future Industry sections; Layoff Recovery NOT present (correct for Student). download-pdf-btn rendered. Laid-Off path: choosing 'Laid Off Employee' user_type produces an additional 'Your work life' Professional step (Step 4/8 visible) — backend tests verify the resulting full report contains 'layoff' + 'it_report' keys.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_career_blueprint.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Optional: add EmailStr validation on /api/analyze (currently plain str; FE regex is the only guard).",
+    "Optional: add lightweight rate-limit on /api/analyze and /api/regret to avoid lead-flooding.",
+    "Optional UX: in PaymentModal mock mode, render skeleton pay-method tiles during the brief 'loading' stage so users see feedback immediately (tests must currently wait for pay-now-btn to appear)."
+  ],
+  "critical_code_review_comments": [
+    "server.py PAYMENT_MODE is evaluated once at import. Acceptable for MVP; if Razorpay keys are added at runtime in production, the process must be restarted to pick them up.",
+    "careers.py: deterministic scoring is well-encapsulated; honesty fields (ai_risk_label, verdict, careers_to_avoid reasons) all computed without AI — good separation of concerns.",
+    "engines.py is_it_profile uses substring 'it' which can match unrelated words (e.g. 'editor'). Low impact but consider word-boundary match.",
+    "Mongo _id properly excluded with projection {_id: 0} on every find_one — good.",
+    "All endpoints use /api prefix and CORS is sourced from env. Good."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_career_blueprint.py"
+  ],
+  "success_rate": {"backend": "100% (15/15)", "frontend": "100% of critical funnel (Student funnel + Laid-Off Professional step visible; Laid-Off layoff section verified via backend)"},
+  "test_credentials": "N/A — no auth in this app. EMERGENT_LLM_KEY present in backend/.env, Razorpay keys absent so payment runs in MOCK mode (per spec).",
+  "seed_data_creation": "Created TEST_Aarav Sharma, TEST_Priya Laidoff, TEST_Student submissions via pytest/UI. All persisted with paid=true after mock payment.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend suite: pytest /app/backend/tests/test_career_blueprint.py -v (15 tests, 100% pass). Frontend testids confirmed: regret-age/current/dream/calc-btn/result; start-analysis-btn; questionnaire; q-usertype-{Student|Laid Off Employee|...}; q-name, q-email, q-phone, q-age, q-gender, q-state, q-gradyear, q-profession; Professional step (Laid-Off & Pro user-types): q-jobtitle, q-exp, q-industry, q-cursalary, q-expsalary; Layoff step (Laid-Off only): q-prevsalary, q-layoffreason, q-skills, q-certs, q-desired; q-interest-<key> (16); q-personality-<key>-<value> (5 binaries: mind/approach/risk/role/work_style); q-pslider-<key> (4 sliders); q-goal-<priority>, q-income30-<val>, q-income40-<val>, q-challenge-<val>; quiz-error, quiz-loading; result-page, success-score, locked-section (contains '₹999' and '₹199'), unlock-premium-btn; razorpay-mock-modal, pay-now-btn; full-report, download-pdf-btn. Payment mode is MOCK (no Razorpay keys yet).",
+  "rca_of_the_issue": "No critical issues found. All review_request items verified: STUDENT funnel never exposes Professional/Layoff steps and report omits 'layoff'; LAID-OFF funnel exposes the additional 'Your work life' Professional step (Step 4/8 in the UI) and backend report contains 'layoff' + 'it_report' keys with full recovery_roadmap. Regret calculator hits POST /api/regret (200) and renders opportunity-cost result. Mock Razorpay flow unlocks the full report end-to-end and download-pdf-btn becomes available. PDF endpoint returns 402 before payment and application/pdf (%PDF prefix, >5KB) after."
+}

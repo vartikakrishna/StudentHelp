@@ -34,7 +34,7 @@ export const Pricing = ({ onStart }) => (
               <div>
                 <div className="flex items-end gap-3">
                   <span className="font-head font-800 text-6xl sm:text-7xl text-gradient">₹199</span>
-                  <span className="text-slate-400 mb-3 line-through font-mono">₹1,499</span>
+                  <span className="text-slate-400 mb-3 line-through font-mono">₹999</span>
                 </div>
                 <p className="mt-2 inline-flex items-center gap-2 text-sm text-purple-600 font-mono bg-purple-50 rounded-full px-3 py-1">
                   <Clock className="w-4 h-4" /> Limited launch price

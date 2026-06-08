@@ -1,13 +1,9 @@
 import React from "react";
 import { Reveal, Stagger, Item } from "../Reveal";
 import { HelpCircle } from "lucide-react";
+import { PAIN_QUESTIONS } from "../../data/blueprint";
 
-const FEARS = [
-  "What if your current career choice is completely wrong?",
-  "What if your real strengths are being ignored right now?",
-  "What if 5 years from now you realize you chose the wrong path?",
-  "What if AI replaces the exact career you're preparing for?",
-];
+const FEARS = PAIN_QUESTIONS;
 
 export const Pain = ({ onStart }) => (
   <section className="relative py-24 sm:py-32 grad-soft" data-testid="pain-section">
