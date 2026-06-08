@@ -5,7 +5,7 @@ import { Slider } from "./ui/slider";
 import { analyze } from "../lib/api";
 import { CTAButton } from "./CTAButton";
 import { USER_TYPES, COUNTRIES } from "../data/blueprint";
-import { stepsFor, metaFor, PERSONALITY_BINARY, PERSONALITY_SLIDERS, PERSONALITY_KEYS } from "../data/questionnaires";
+import { stepsFor, metaFor, PERSONALITY_BINARY, PERSONALITY_SLIDERS, PERSONALITY_KEYS, ACTIVE_TYPES } from "../data/questionnaires";
 
 const inputCls = "w-full rounded-xl bg-white border border-slate-200 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none transition";
 const defaultPers = { mind: "", approach: "", risk: "", work_style: "", structure: "", leadership_interest: 5, communication: 5, stress_tolerance: 5 };
@@ -108,9 +108,11 @@ const UserTypeStep = ({ p, setP }) => (
       {USER_TYPES.map((u) => {
         const Icon = Icons[u.icon] || Icons.User;
         const active = p.user_type === u.value;
+        const enabled = ACTIVE_TYPES.includes(u.value);
         return (
-          <button key={u.value} type="button" data-testid={`q-usertype-${u.value}`} onClick={() => setP({ ...p, user_type: u.value })}
-            className={`flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all ${active ? "border-purple-400 bg-purple-50 ring-2 ring-purple-200" : "border-slate-200 bg-white hover:border-purple-300"}`}>
+          <button key={u.value} type="button" disabled={!enabled} data-testid={`q-usertype-${u.value}`} onClick={() => enabled && setP({ ...p, user_type: u.value })}
+            className={`relative flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all ${!enabled ? "border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed" : active ? "border-purple-400 bg-purple-50 ring-2 ring-purple-200" : "border-slate-200 bg-white hover:border-purple-300"}`}>
+            {!enabled && <span className="absolute top-2 right-2 text-[9px] font-mono bg-slate-200 text-slate-500 rounded-full px-1.5 py-0.5">SOON</span>}
             <span className={`w-11 h-11 rounded-xl flex items-center justify-center ${active ? "grad-primary" : "bg-slate-100"}`}><Icon className={`w-5 h-5 ${active ? "text-white" : "text-slate-500"}`} strokeWidth={1.8} /></span>
             <span className="text-sm font-medium text-slate-800 text-center leading-tight">{u.label}</span>
           </button>

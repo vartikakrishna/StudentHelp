@@ -124,6 +124,8 @@ export const QUESTIONNAIRES = {
 
 const STUDENT_LIKE = ["Student", "Fresher"];
 
+export const ACTIVE_TYPES = ["Student", "IT Employee", "Working Professional"];
+
 export function stepsFor(userType) {
   if (QUESTIONNAIRES[userType]) return QUESTIONNAIRES[userType];
   return STUDENT_LIKE.includes(userType) ? STUDENT_STEPS : PRO_STEPS;

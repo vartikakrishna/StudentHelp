@@ -54,6 +54,33 @@ Freelancer, Business Owner.
 - Fixed: removed "Fresher" from frontend PROFESSIONAL_TYPES so Freshers skip the pro questionnaire
   step (consistent with their student ₹199 plan).
 
+## 🚀 MAJOR UPGRADE — Per-Category Products (data-driven engine)
+Each user type is now its own product: different questionnaire, scoring model, report sections,
+recommendations and action plan. Architecture is data-driven — engines emit typed `sections`
+(intro/callout/scorecards/bars/matches/list/tags/cards/roadmap/salary_chart/letter) rendered
+identically on web (`ReportRenderer.jsx`) and PDF (`pdf_generator.build_pdf`).
+
+### Phase 1 — DONE (2026-06), tested iteration_5 (100%)
+- **Student → Career Direction Report (₹199):** career match, best degrees, AI-proof options,
+  mistakes to avoid, skills, learning roadmap, 10-yr projection, future-self letter.
+- **IT Employee → AI Survival & Growth Report (₹499):** AI replacement risk, threat assessment,
+  transition opportunities, skill gaps, emerging tech, tech roadmap, salary plan, verdict.
+- **Working Professional → Career Growth Report (₹499):** promotion readiness, salary forecast,
+  leadership analysis, industry outlook, growth roadmap.
+- Personality reduced to 8 traits (5 binary + 3 sliders) used as 20% scoring modifier.
+- Category VALUE screen before the questionnaire; typed PREVIEW (some scores visible, some 🔒);
+  Hero headline updated; non-Phase-1 types gated as "SOON".
+- Backend: `type_engines.py` (engines + dispatch + PROFILE_META), `common.py` (traits, interest
+  mapping, section builder), `ai_engine.enhance` (per-category prose, deterministic fallback),
+  flexible `/api/analyze` ({user_type, answers, personality}).
+
+### Phase 2 — TODO (P0): Fresher (₹199), Career Switcher (₹499), Laid Off Employee (₹499)
+Build dedicated questionnaire + scoring engine + sections per the spec (job readiness / switch
+feasibility / recovery roadmaps). Remove their "SOON" gating + interim student/professional routing.
+
+### Phase 3 — TODO (P1): Manager (₹499), Freelancer (₹499), Business Owner (₹499)
+Leadership growth / freelance income / business-growth intelligence reports.
+
 ## Backlog
 - **P0**: Add live RAZORPAY_KEY_ID/SECRET → restart backend → flip to live; re-test gateway. (BLOCKED on user keys)
 - **P1 (DONE 2026-06)**: Functional post-purchase upsells. `addons.py` (catalog + personalized Resume/
