@@ -16,12 +16,14 @@ def _num(v, default=0.0):
         return default
 
 
-IT_KEYWORDS = ["it", "software", "developer", "engineer", "tester", "qa", "data", "devops",
-               "cloud", "tech", "programmer", "analyst", "computer", "information technology"]
+IT_KEYWORDS = ["software", "developer", "engineer", "tester", "qa", "devops",
+               "cloud", "tech", "programmer", "computer", "information technology"]
 
 
 def is_it_profile(profile: Dict[str, Any]) -> bool:
     blob = " ".join(str(profile.get(k, "")) for k in ["user_type", "current_profession", "current_degree", "education", "job_title", "industry"]).lower()
+    if "it" in blob.replace(",", " ").split():  # whole-word 'IT' only
+        return True
     return any(k in blob for k in IT_KEYWORDS)
 
 
