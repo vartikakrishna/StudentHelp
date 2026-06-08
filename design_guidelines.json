@@ -1,0 +1,140 @@
+{
+  "project_name": "Career Blueprint AI",
+  "theme_archetype": {
+    "archetype_number": 5,
+    "archetype_name": "Luxury / Premium Cinematic",
+    "theme": "DARK",
+    "rationale": "Matches the 'Netflix-quality' requirement, feeling authoritative, emotional, and premium to justify the ₹199 paywall and alleviate user anxiety with high production value."
+  },
+  "typography": {
+    "fonts": {
+      "headings": {
+        "family": "Outfit, sans-serif",
+        "weights": ["300", "500", "700", "800"],
+        "description": "Used for all headings. 'Outfit' provides a very geometric, modern, cinematic feel."
+      },
+      "body": {
+        "family": "Plus Jakarta Sans, sans-serif",
+        "weights": ["400", "500", "600"],
+        "description": "Clean, highly readable humanist sans for the questionnaire and dense report data."
+      },
+      "accent": {
+        "family": "Space Mono, monospace",
+        "weights": ["400"],
+        "description": "Used ONLY for score numbers, progress percentages, and overlines (e.g., 'SUCCESS SCORE: 85%')."
+      }
+    },
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tighter font-extrabold leading-tight",
+      "h2": "text-3xl sm:text-4xl lg:text-5xl tracking-tight font-bold",
+      "h3": "text-2xl sm:text-3xl tracking-tight font-semibold",
+      "body": "text-base sm:text-lg leading-relaxed",
+      "overline": "text-xs font-bold tracking-[0.2em] uppercase"
+    }
+  },
+  "colors": {
+    "background": {
+      "main": "#040914",
+      "secondary": "#070E1E",
+      "description": "Deep cinematic navy. Avoid pure black to maintain richness."
+    },
+    "surface": {
+      "glass": "bg-white/5 backdrop-blur-xl",
+      "card": "bg-[#091226]",
+      "description": "Use 'Crystal' glassmorphism for floating navs and locked content overlays. Solid dark navy for questionnaire cards."
+    },
+    "accent": {
+      "primary": "#F59E0B",
+      "secondary": "#E5C07B",
+      "glow": "rgba(245, 158, 11, 0.15)",
+      "description": "Gold/Amber to signify premium quality, unlocking, and success. Used for CTAs, progress bars, and lock icons."
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#94A3B8",
+      "muted": "#64748B"
+    },
+    "border": {
+      "subtle": "rgba(255, 255, 255, 0.08)",
+      "active": "rgba(245, 158, 11, 0.4)"
+    }
+  },
+  "spacing_and_layout": {
+    "generous_spacing": true,
+    "section_padding": "py-24 sm:py-32",
+    "container": "max-w-7xl mx-auto px-6 lg:px-8",
+    "grid_modes": {
+      "features": "grid-cols-1 md:grid-cols-12 gap-6 (Bento layout for 'What's Inside')",
+      "questionnaire": "max-w-2xl mx-auto (Focused, centralized column)"
+    },
+    "image_constraints": "max-h-[80vh] md:max-h-none object-cover"
+  },
+  "components": {
+    "hero": {
+      "style": "Cinematic depth. Dark navy/gold abstract texture background with a heavy radial gradient overlay to fade edges into #040914.",
+      "layout": "Centered alignment for emotional impact. H1 -> Subheadline -> Primary CTA Button.",
+      "overlay": "bg-gradient-to-b from-transparent via-[#040914]/80 to-[#040914]"
+    },
+    "cta_button": {
+      "style": "bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white font-bold rounded-none shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] transition-all px-8 py-4 text-lg",
+      "shape": "Slightly rounded corners (rounded-md) to maintain premium feel, avoiding overly pill-shaped generic SaaS look."
+    },
+    "questionnaire_card": {
+      "style": "Flat solid background (#091226) with 1px border-white/10. No heavy glassmorphism here to keep focus on the inputs.",
+      "inputs": "Use Shadcn Slider for 1-10 scales, Select/Cards for choices."
+    },
+    "lock_overlay": {
+      "container": "relative overflow-hidden",
+      "overlay_style": "absolute inset-0 z-20 backdrop-blur-2xl bg-[#040914]/70 flex flex-col items-center justify-center p-6 border-t border-white/10",
+      "icon": "Lucide Lock icon, text-amber-500, w-12 h-12 mb-4 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+    },
+    "bento_grid": {
+      "style": "Use for 'What's Inside Premium Report'. Glass cards with border-white/5. Spans: 1 large hero card (col-span-full md:col-span-8), 2 smaller feature cards."
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "Stroke width 1.5. Colors: white for general, amber-500 for success/premium indicators."
+    }
+  },
+  "motion_and_interactions": {
+    "scrolling": "IMPLEMENT lenis for premium smooth scroll momentum.",
+    "reveal": "Use framer-motion. Staggered fade-up (initial opacity 0, y 20) for all text and cards on scroll.",
+    "hover_states": "Cards: -translate-y-1, border-white/20, duration-300. Buttons: scale-105.",
+    "micro_interactions": "Progress bar in the questionnaire must animate smoothly (width transition)."
+  },
+  "image_urls": {
+    "hero_background": {
+      "url": "https://images.unsplash.com/photo-1556139930-c23fa4a4f934?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGRhcmslMjBuYXZ5JTIwZ29sZCUyMGNpbmVtYXRpYyUyMHRleHR1cmV8ZW58MHx8fHwxNzgwOTA1OTE1fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Abstract black/brown/gold painting. Use as a deeply darkened, low-opacity background for the hero section to give cinematic texture.",
+      "usage": "Hero section background (wrapped in heavy vignette)"
+    },
+    "transformation_student": {
+      "url": "https://images.unsplash.com/photo-1760004941335-6feccb7f800a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxNzV8MHwxfHNlYXJjaHwzfHxjb25maWRlbnQlMjBzdHVkZW50JTIwcG9ydHJhaXQlMjBkYXJrJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3ODA5MDU5MTZ8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Man with glasses looking forward in the dark. Cinematic and confident.",
+      "usage": "Use in the 'Transformation / Before-After' section to represent clarity and confidence."
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. FRAMEWORK: Use React, Tailwind CSS, Framer Motion, and pure HTML structure for layout freedom.",
+    "2. THEME: The site is exclusively DARK MODE. Set backgrounds to #040914 (deep navy).",
+    "3. HERO SECTION: Implement a cinematic, emotional hero. Use the provided hero_background image with a heavy CSS overlay (`bg-[#040914]/80`) so it barely peeks through.",
+    "4. QUESTIONNAIRE: Build a multi-step interactive form. Use Shadcn for Slider, Select, RadioGroups. Include a dynamic progress bar at the top.",
+    "5. PREVIEW SECTION: Show top 3 mocked career matches. Below that, physically render a 'mock' premium report but overlay it with a `backdrop-blur-2xl` div containing the lock icon and 'Unlock Full Blueprint for ₹199' CTA.",
+    "6. SPACING: Use generous margins (`py-24`). Avoid tight crammed boxes.",
+    "7. COMPONENTS: Avoid Shadcn Card wrappers for marketing sections; use raw `div` elements with Tailwind classes for bento grids.",
+    "8. PAYMENT: Integrate a mocked Razorpay checkout modal that triggers on the ₹199 CTA.",
+    "9. TEST IDS: Add `data-testid` attributes to all buttons, form inputs, and major sections.",
+    "10. FONTS: Import 'Outfit' (weights 300,500,700,800), 'Plus Jakarta Sans' (400,500,600), and 'Space Mono' (400) from Google Fonts."
+  ],
+  "accessibility_and_testing": {
+    "contrast": "Ensure white text over dark navy meets APCA contrast guidelines. CTA text must be legible against amber.",
+    "focus_states": "focus:ring-2 focus:ring-amber-500/50 focus:outline-none",
+    "test_ids_required": [
+      "start-analysis-btn",
+      "questionnaire-step-1",
+      "questionnaire-next-btn",
+      "unlock-premium-btn",
+      "razorpay-mock-modal"
+    ]
+  }
+}
