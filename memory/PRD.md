@@ -109,3 +109,27 @@ Leadership growth / freelance income / business-growth intelligence reports.
 ## Next Tasks
 1. Receive Razorpay keys → enable live payments.
 2. Optional: email delivery + lead-nurture sequence.
+
+## 🎯 FUTURE-GOAL / DREAM CAREER ENGINE (2026-06) — P0 bias fix DONE
+Fixed the critical recommendation bias where the engine overrode users' dream careers with
+unrelated generic jobs (e.g. "Game Developer" → "Data Entry"). The previous agent had built
+`career_db.py` (200+ careers across 15 clusters + free-text resolver + dream_match weights) but
+it was never wired in. Now integrated:
+- **`career_db.py`**: `goal_block()` resolves the user's stated dream/target via `resolve_career()`
+  (ordering fixed so exact titles beat greedy alias substrings — Data Scientist no longer → Research
+  Scientist), PINS it as the #1 match (Honesty Rule — never substituted), adds 2-3 RELATED backup
+  careers from the same cluster + an honest `challenges_for()` read. Weights: Dream 25 · Interest 25 ·
+  Aptitude 20 · Personality 15 · Market 15. Plus `fit_score`, `rank_all`, `avoid_block`, `_card`.
+- **`type_engines.py`**: `analyze_student` rewritten → "Dream Career Match" + "Success Probability"
+  scorecards, new `dream_verdict` cards section (goal card with challenges + backup-plan card),
+  matches = dream + related + best-fit. `analyze_switcher` → `target_direction` matches section on the
+  resolved target profession. `analyze_fresher` → optional `target_role` field → `target_direction`.
+- **`ai_engine.py`**: SYSTEM prompt now carries the HONESTY RULE (LLM may explain challenges but must
+  never replace/downgrade the dream or suggest an unrelated "safe" job).
+- **Frontend**: Fresher questionnaire gained a "Your Dream / Target Role" text field.
+- Per user direction, the engine is a **"Future Goal Engine"**: Student/Fresher/Switcher → Dream Career;
+  IT/Professional/Manager → Future Direction; Freelancer → Business Goal; Business Owner → Growth Goal;
+  Laid-Off → Recovery Goal (each engine already optimizes for its own objective).
+- Verified: backend 17/17 pytest (`tests/test_dream_engine.py`) + `tests/test_all_types.py` (9 distinct
+  valid PDFs) + frontend Student "Game Developer" funnel E2E (iteration_7, 100%). Game Developer pinned
+  #1 @86% with Gameplay Programmer/Unity/Unreal backups; zero Data Entry leakage.
