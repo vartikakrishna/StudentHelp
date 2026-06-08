@@ -56,7 +56,12 @@ Freelancer, Business Owner.
 
 ## Backlog
 - **P0**: Add live RAZORPAY_KEY_ID/SECRET → restart backend → flip to live; re-test gateway. (BLOCKED on user keys)
-- **P1**: Functional upsell selection logic (add Resume/LinkedIn/Interview add-ons to order post-purchase).
+- **P1 (DONE 2026-06)**: Functional post-purchase upsells. `addons.py` (catalog + personalized Resume/
+  LinkedIn/Interview deliverables, bundle = all 3). Endpoints: POST /api/create-addon-order (402 until
+  main report paid; bundle supersedes), POST /api/verify-addon-payment (grants components, returns
+  purchased_addons), GET /api/report/{id}/addon/{addon_id}/pdf (branded add-on PDF, 402 if unpurchased).
+  Frontend: interactive multi-select cards + bundle exclusivity + sticky checkout bar + reused PaymentModal
+  (addon mode) + purchased-state download links. Verified backend curl + frontend E2E (iteration_4, 100%).
 - **P1**: Email the PDF (Resend/SendGrid); admin dashboard for leads/conversions/revenue.
 - **P2**: EmailStr validation + rate-limit on /api/analyze & /api/regret; shareable result card; coupon codes;
   per-state salary localisation.
