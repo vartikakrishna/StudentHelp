@@ -14,7 +14,7 @@ export const USER_TYPES = [
 
 export const PROFESSIONAL_TYPES = [
   "Working Professional", "IT Employee", "Manager", "Laid Off Employee",
-  "Career Switcher", "Freelancer", "Business Owner", "Fresher",
+  "Career Switcher", "Freelancer", "Business Owner",
 ];
 
 export const COUNTRIES = ["India", "United States", "United Kingdom", "Canada", "UAE", "Australia", "Singapore", "Germany", "Other"];

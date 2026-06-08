@@ -43,8 +43,20 @@ Freelancer, Business Owner.
 - Live-ready Razorpay (mock active until keys added). All leads stored.
 - Tested: backend 15/15 pytest pass; frontend Student + Laid-Off funnels 100%; IT-detection verified.
 
+## Implemented (2026-06 — dual pricing + honesty)
+- **Dual pricing**: Student/Fresher = ₹199 "Student Career Blueprint" (₹999 strike); all professional
+  types = ₹499 "Professional Career Intelligence Report" (₹2499 strike). `plan_for()` in server.py;
+  PLAN_CONFIG/COMPARISON/UPSELLS in blueprint.js. Plan-specific locked sections, comparison table
+  (highlights active plan column), upsell cards, and pro-only report sections (Potential Scores,
+  Career Switch, IT Future, Resume/LinkedIn/Interview). Verified E2E (testing iteration_3, 100%).
+- **Honesty engine hardened**: ai_engine.py SYSTEM + prompt now enforce ZERO sugar-coating —
+  blunt verdicts, named uncomfortable truths, data-backed. (user request 2026-06)
+- Fixed: removed "Fresher" from frontend PROFESSIONAL_TYPES so Freshers skip the pro questionnaire
+  step (consistent with their student ₹199 plan).
+
 ## Backlog
-- **P0**: Add live RAZORPAY_KEY_ID/SECRET → restart backend → flip to live; re-test gateway.
+- **P0**: Add live RAZORPAY_KEY_ID/SECRET → restart backend → flip to live; re-test gateway. (BLOCKED on user keys)
+- **P1**: Functional upsell selection logic (add Resume/LinkedIn/Interview add-ons to order post-purchase).
 - **P1**: Email the PDF (Resend/SendGrid); admin dashboard for leads/conversions/revenue.
 - **P2**: EmailStr validation + rate-limit on /api/analyze & /api/regret; shareable result card; coupon codes;
   per-state salary localisation.
