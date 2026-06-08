@@ -37,7 +37,7 @@ function App() {
   }
 
   return (
-    <div className="App bg-[#040914] text-white">
+    <div className="App bg-white text-slate-900">
       <Navbar onStart={startQuiz} />
       <main>
         <Hero onStart={startQuiz} />

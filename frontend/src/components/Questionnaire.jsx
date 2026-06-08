@@ -63,20 +63,20 @@ export const Questionnaire = ({ onClose, onComplete }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#040914] overflow-y-auto" data-testid="questionnaire">
+    <div className="fixed inset-0 z-[100] bg-white grad-mesh overflow-y-auto" data-testid="questionnaire">
       {/* Progress header */}
-      <div className="sticky top-0 z-10 bg-[#040914]/90 backdrop-blur-xl border-b border-white/8">
+      <div className="sticky top-0 z-10 glass border-b border-slate-200/70">
         <div className="max-w-2xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between mb-3">
-            <button onClick={onClose} data-testid="quiz-close-btn" className="text-slate-400 hover:text-white flex items-center gap-1.5 text-sm">
+            <button onClick={onClose} data-testid="quiz-close-btn" className="text-slate-500 hover:text-slate-900 flex items-center gap-1.5 text-sm">
               <Icons.ChevronLeft className="w-4 h-4" /> Exit
             </button>
-            <span className="font-mono text-xs text-amber-500 tracking-widest uppercase">
+            <span className="font-mono text-xs text-purple-600 tracking-widest uppercase">
               Step {step + 1} / {STEP_TITLES.length} · {STEP_TITLES[step]}
             </span>
           </div>
-          <div className="h-1.5 rounded-full bg-[#1E293B] overflow-hidden">
-            <motion.div className="h-full gold-gradient" animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} />
+          <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+            <motion.div className="h-full grad-primary-h" animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} />
           </div>
         </div>
       </div>
@@ -103,11 +103,11 @@ export const Questionnaire = ({ onClose, onComplete }) => {
             </motion.div>
           </AnimatePresence>
 
-          {error && <p className="mt-6 text-red-400 text-sm" data-testid="quiz-error">{error}</p>}
+          {error && <p className="mt-6 text-rose-500 text-sm" data-testid="quiz-error">{error}</p>}
 
           <div className="mt-10 flex items-center justify-between">
             {step > 0 ? (
-              <button onClick={() => setStep(step - 1)} className="text-slate-400 hover:text-white flex items-center gap-1.5">
+              <button onClick={() => setStep(step - 1)} className="text-slate-500 hover:text-slate-900 flex items-center gap-1.5">
                 <Icons.ChevronLeft className="w-5 h-5" /> Back
               </button>
             ) : <span />}
@@ -123,21 +123,21 @@ export const Questionnaire = ({ onClose, onComplete }) => {
 
 const Field = ({ label, children }) => (
   <div>
-    <label className="block text-sm text-slate-300 mb-2 font-medium">{label}</label>
+    <label className="block text-sm text-slate-700 mb-2 font-medium">{label}</label>
     {children}
   </div>
 );
 
 const inputCls =
-  "w-full rounded-lg bg-[#091226] border border-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/30 focus:outline-none transition";
+  "w-full rounded-xl bg-white border border-slate-200 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none transition";
 
 const Chip = ({ active, onClick, children, testid }) => (
   <button
     type="button"
     data-testid={testid}
     onClick={onClick}
-    className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
-      active ? "border-amber-500 bg-amber-500/15 text-white" : "border-white/10 bg-[#091226] text-slate-300 hover:border-white/25"
+    className={`px-4 py-2.5 rounded-full border text-sm font-medium transition-all ${
+      active ? "border-transparent grad-primary-h text-white shadow-md shadow-purple-500/30" : "border-slate-200 bg-white text-slate-600 hover:border-purple-300"
     }`}
   >
     {children}
@@ -148,8 +148,8 @@ const AboutStep = ({ profile, setProfile }) => {
   const up = (k) => (e) => setProfile({ ...profile, [k]: e.target.value });
   return (
     <div>
-      <h2 className="font-head font-700 text-3xl mb-2">Let&apos;s start with you.</h2>
-      <p className="text-slate-400 mb-8">Your blueprint is personalised — these details shape your results.</p>
+      <h2 className="font-head font-700 text-3xl mb-2 text-slate-900">Let&apos;s start with you.</h2>
+      <p className="text-slate-500 mb-8">Your blueprint is personalized — these details shape your results.</p>
       <div className="grid sm:grid-cols-2 gap-5">
         <Field label="Full Name *">
           <input data-testid="q-name" className={inputCls} value={profile.name} onChange={up("name")} placeholder="e.g. Aarav Sharma" />
@@ -190,18 +190,21 @@ const AboutStep = ({ profile, setProfile }) => {
 
 const InterestsStep = ({ interests, setInterests }) => (
   <div>
-    <h2 className="font-head font-700 text-3xl mb-2">Rate your interests.</h2>
-    <p className="text-slate-400 mb-8">Drag each slider from 1 (not interested) to 10 (love it).</p>
+    <h2 className="font-head font-700 text-3xl mb-2 text-slate-900">Rate your interests.</h2>
+    <p className="text-slate-500 mb-8">Drag each slider from 1 (not interested) to 10 (love it).</p>
     <div className="space-y-6">
       {INTERESTS.map((it) => {
         const Icon = Icons[it.icon] || Icons.Sparkles;
         return (
-          <div key={it.key}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="flex items-center gap-2.5 text-white font-medium">
-                <Icon className="w-4 h-4 text-gold" strokeWidth={1.8} /> {it.label}
+          <div key={it.key} className="rounded-2xl bg-white border border-slate-100 p-4 soft-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <span className="flex items-center gap-2.5 text-slate-800 font-medium">
+                <span className="w-8 h-8 rounded-lg grad-primary flex items-center justify-center">
+                  <Icon className="w-4 h-4 text-white" strokeWidth={1.9} />
+                </span>
+                {it.label}
               </span>
-              <span className="font-mono text-gold text-sm w-7 text-right">{interests[it.key]}</span>
+              <span className="font-mono text-purple-600 text-sm w-7 text-right">{interests[it.key]}</span>
             </div>
             <Slider
               data-testid={`q-interest-${it.key}`}
@@ -219,12 +222,12 @@ const InterestsStep = ({ interests, setInterests }) => (
 
 const PersonalityStep = ({ personality, setPersonality }) => (
   <div>
-    <h2 className="font-head font-700 text-3xl mb-2">How are you wired?</h2>
-    <p className="text-slate-400 mb-8">Pick whatever feels most like you.</p>
+    <h2 className="font-head font-700 text-3xl mb-2 text-slate-900">How are you wired?</h2>
+    <p className="text-slate-500 mb-8">Pick whatever feels most like you.</p>
     <div className="space-y-8">
       {PERSONALITY.map((p) => (
         <div key={p.key}>
-          <p className="font-head text-lg mb-3">{p.question}</p>
+          <p className="font-head font-600 text-lg mb-3 text-slate-900">{p.question}</p>
           <div className="grid sm:grid-cols-2 gap-3">
             {p.options.map((o) => {
               const active = personality[p.key] === o.value;
@@ -234,12 +237,12 @@ const PersonalityStep = ({ personality, setPersonality }) => (
                   type="button"
                   data-testid={`q-personality-${p.key}-${o.value}`}
                   onClick={() => setPersonality({ ...personality, [p.key]: o.value })}
-                  className={`text-left rounded-xl border p-4 transition-all ${
-                    active ? "border-amber-500 bg-amber-500/15" : "border-white/10 bg-[#091226] hover:border-white/25"
+                  className={`text-left rounded-2xl border p-4 transition-all ${
+                    active ? "border-purple-400 bg-purple-50 ring-2 ring-purple-200" : "border-slate-200 bg-white hover:border-purple-300"
                   }`}
                 >
-                  <p className="font-head font-700 text-white">{o.label}</p>
-                  <p className="text-sm text-slate-400 mt-0.5">{o.desc}</p>
+                  <p className="font-head font-700 text-slate-900">{o.label}</p>
+                  <p className="text-sm text-slate-500 mt-0.5">{o.desc}</p>
                 </button>
               );
             })}
@@ -252,10 +255,10 @@ const PersonalityStep = ({ personality, setPersonality }) => (
 
 const GoalsStep = ({ goals, setGoals, togglePriority }) => (
   <div>
-    <h2 className="font-head font-700 text-3xl mb-2">What do you want?</h2>
-    <p className="text-slate-400 mb-8">Be honest — there are no wrong answers.</p>
+    <h2 className="font-head font-700 text-3xl mb-2 text-slate-900">What do you want?</h2>
+    <p className="text-slate-500 mb-8">Be honest — there are no wrong answers.</p>
 
-    <p className="font-head text-lg mb-3">What matters most? <span className="text-slate-500 text-sm font-body">(pick any)</span></p>
+    <p className="font-head font-600 text-lg mb-3 text-slate-900">What matters most? <span className="text-slate-400 text-sm font-body">(pick any)</span></p>
     <div className="flex flex-wrap gap-2.5 mb-8">
       {GOAL_PRIORITIES.map((p) => (
         <Chip key={p} active={goals.priorities.includes(p)} onClick={() => togglePriority(p)} testid={`q-goal-${p}`}>
@@ -264,7 +267,7 @@ const GoalsStep = ({ goals, setGoals, togglePriority }) => (
       ))}
     </div>
 
-    <p className="font-head text-lg mb-3">Your dream income?</p>
+    <p className="font-head font-600 text-lg mb-3 text-slate-900">Your dream income?</p>
     <div className="flex flex-wrap gap-2.5 mb-8">
       {DREAM_INCOME.map((d) => (
         <Chip key={d.value} active={goals.dream_income === d.value} onClick={() => setGoals({ ...goals, dream_income: d.value })} testid={`q-income-${d.value}`}>
@@ -273,7 +276,7 @@ const GoalsStep = ({ goals, setGoals, togglePriority }) => (
       ))}
     </div>
 
-    <p className="font-head text-lg mb-3">Your biggest challenge right now?</p>
+    <p className="font-head font-600 text-lg mb-3 text-slate-900">Your biggest challenge right now?</p>
     <div className="space-y-2.5">
       {CHALLENGES.map((c) => {
         const active = goals.challenge === c;
@@ -283,8 +286,8 @@ const GoalsStep = ({ goals, setGoals, togglePriority }) => (
             type="button"
             data-testid={`q-challenge-${c}`}
             onClick={() => setGoals({ ...goals, challenge: c })}
-            className={`w-full text-left rounded-xl border px-4 py-3.5 transition-all ${
-              active ? "border-amber-500 bg-amber-500/15 text-white" : "border-white/10 bg-[#091226] text-slate-300 hover:border-white/25"
+            className={`w-full text-left rounded-2xl border px-4 py-3.5 transition-all ${
+              active ? "border-purple-400 bg-purple-50 text-slate-900 ring-2 ring-purple-200" : "border-slate-200 bg-white text-slate-600 hover:border-purple-300"
             }`}
           >
             {c}
@@ -300,7 +303,7 @@ const LoadingScreen = ({ name }) => {
     "Mapping your personality profile…",
     "Scoring 12 high-growth career paths…",
     "Calculating salary & AI-risk projections…",
-    "Writing your personalised blueprint…",
+    "Writing your personalized blueprint…",
   ];
   const [i, setI] = useState(0);
   React.useEffect(() => {
@@ -312,13 +315,13 @@ const LoadingScreen = ({ name }) => {
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ repeat: Infinity, duration: 2.4, ease: "linear" }}
-        className="w-20 h-20 rounded-full border-2 border-amber-500/20 border-t-amber-500 mb-8"
+        className="w-20 h-20 rounded-full border-4 border-purple-100 border-t-purple-500 mb-8"
       />
-      <h3 className="font-head font-700 text-2xl sm:text-3xl mb-3">
+      <h3 className="font-head font-700 text-2xl sm:text-3xl mb-3 text-slate-900">
         Building {name ? name.split(" ")[0] + "'s" : "your"} Career Blueprint…
       </h3>
       <AnimatePresence mode="wait">
-        <motion.p key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="text-amber-400 font-mono text-sm">
+        <motion.p key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="text-purple-600 font-mono text-sm">
           {lines[i]}
         </motion.p>
       </AnimatePresence>
