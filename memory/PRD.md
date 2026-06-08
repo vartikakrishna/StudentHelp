@@ -54,6 +54,19 @@ Freelancer, Business Owner.
 - Fixed: removed "Fresher" from frontend PROFESSIONAL_TYPES so Freshers skip the pro questionnaire
   step (consistent with their student ₹199 plan).
 
+## 🚀 ALL 9 CATEGORIES LIVE (2026-06) — distinct standalone products
+Each user type is its own product: unique questionnaire, scoring model, report sections,
+recommendations, roadmap, action plan and AI focus. Every report answers the 8 universal
+questions (where am I / risks / missed opportunities / focus / stop / 30-day / 90-day / 1-year)
+via shared `diagnostic_sections` + `action_roadmap` with category-specific content. Typed
+`sections` render identically on web (`ReportRenderer.jsx`) and PDF (`build_pdf`).
+Products: Student=Career Direction (₹199), Fresher=First-Job Readiness (₹199), IT Employee=AI
+Survival & Growth (₹499), Working Professional=Career Growth (₹499), Career Switcher=Career
+Transition Blueprint (₹499), Laid Off=Career Recovery Blueprint (₹499), Manager=Leadership Growth
+(₹499), Freelancer=Freelance Income (₹499), Business Owner=Business Growth Intelligence (₹499).
+Tested: backend `tests/test_all_types.py` (all 9 distinct + valid PDFs) + frontend iteration_6 (100%).
+All categories unlocked; personality = 8 traits (20% weight); category VALUE screen before quiz.
+
 ## 🚀 MAJOR UPGRADE — Per-Category Products (data-driven engine)
 Each user type is now its own product: different questionnaire, scoring model, report sections,
 recommendations and action plan. Architecture is data-driven — engines emit typed `sections`

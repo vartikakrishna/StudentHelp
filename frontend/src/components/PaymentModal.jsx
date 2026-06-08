@@ -110,7 +110,7 @@ export const PaymentModal = ({ submissionId, name, email, phone, addonIds = null
             {stage === "pay" && (
               <motion.div key="p" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 {isLive ? (
-                  <button data-testid="pay-now-btn" onClick={() => { setStage("processing"); openLive(order); }} className="w-full grad-primary-h text-white font-head font-700 rounded-full py-3.5 glow-primary hover:scale-[1.02] transition">Pay ₹{amount} with Razorpay</button>
+                  <button data-testid="pay-now-live-btn" onClick={() => { setStage("processing"); openLive(order); }} className="w-full grad-primary-h text-white font-head font-700 rounded-full py-3.5 glow-primary hover:scale-[1.02] transition">Pay ₹{amount} with Razorpay</button>
                 ) : (
                   <>
                     <div className="grid grid-cols-2 gap-2.5 mb-5">
