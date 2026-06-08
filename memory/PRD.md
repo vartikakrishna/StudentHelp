@@ -107,8 +107,23 @@ Leadership growth / freelance income / business-growth intelligence reports.
   per-state salary localisation.
 
 ## Next Tasks
-1. Receive Razorpay keys → enable live payments.
+1. ✅ Razorpay LIVE keys added (2026-06) → `payment_mode: live`, real order creation verified
+   (order_Sz9MmMOnodWX93, ₹199). Add the same keys to the PRODUCTION deployment env to go live there too.
 2. Optional: email delivery + lead-nurture sequence.
+
+## 🧭 FUTURE-DIRECTION ENGINE for IT / Professional / Manager (2026-06) — DONE
+Extended the goal engine into the remaining "direction" categories. New shared
+`type_engines._future_direction(goal_text, traits, prefix)` resolves a free-text target role via
+`career_db.goal_block()` and, when it maps to a real career, inserts a `future_direction` matches
+section (resolved role pinned #1 + related careers). Generic seniority titles (Director/VP/CEO/CTO/
+Manager/Lead/Principal…) are intentionally SKIPPED via a GENERIC_LEVELS guard so we never misfire
+(e.g. corporate "Director" no longer resolves to "Film Director"). Wired into:
+- `analyze_it` → `answers['future_goal']` (new IT questionnaire field "Your Future Direction").
+- `analyze_professional` → `answers['desired_position']` (existing field).
+- `analyze_manager` → `answers['target_role']` (new Manager field "Your Target Leadership Role").
+Added career_db aliases (solutions/software/technical/cloud architect → cloud_architect). Blank field =
+old behavior preserved. Verified: 31/31 backend pytest (test_future_direction.py + test_dream_engine.py)
++ 3 UI funnels (iteration_8, 100%).
 
 ## 🎯 FUTURE-GOAL / DREAM CAREER ENGINE (2026-06) — P0 bias fix DONE
 Fixed the critical recommendation bias where the engine overrode users' dream careers with
