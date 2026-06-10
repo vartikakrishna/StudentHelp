@@ -165,7 +165,67 @@ const Letter = ({ s }) => (
   </div>
 );
 
-const BLOCKS = { intro: Intro, callout: Callout, scorecards: ScoreCards, bars: Bars, matches: Matches, list: ListBlock, tags: Tags, cards: Cards, roadmap: Roadmap, salary_chart: SalaryChart, letter: Letter };
+const Recommendations = ({ s }) => (
+  <div className="space-y-4">
+    {s.items.map((m, i) => {
+      const Icon = Icons[m.icon] || Icons.Sparkles;
+      const riskTone = m.ai_risk <= 25 ? "emerald" : m.ai_risk <= 55 ? "amber" : "rose";
+      return (
+        <div key={m.key || i} className="rounded-3xl glass-card p-6" data-testid={`recommendation-${i}`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="flex items-center gap-2.5 font-head font-700 text-slate-900 text-lg">
+              <span className="w-8 h-8 rounded-lg grad-primary flex items-center justify-center shrink-0"><Icon className="w-4 h-4 text-white" /></span>{m.title}
+            </span>
+            <span className="font-mono text-gradient font-800 text-xl shrink-0">{m.score}%</span>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {m.growth && <Badge t="emerald">{m.growth} growth</Badge>}
+            <Badge t={riskTone}>{m.ai_risk_label}</Badge>
+            {m.salary_mid != null && <Badge t="cyan">~₹{m.salary_mid} LPA</Badge>}
+          </div>
+          {m.why && <p className="text-slate-700 text-sm mb-3"><span className="font-600 text-slate-900">Why it fits: </span>{m.why}</p>}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs font-700 text-emerald-600 mb-1.5 uppercase tracking-wide">Pros</p>
+              <ul className="space-y-1">{(m.pros || []).map((p, j) => <li key={j} className="text-slate-600 text-sm flex gap-2"><Icons.Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />{p}</li>)}</ul>
+            </div>
+            <div>
+              <p className="text-xs font-700 text-rose-600 mb-1.5 uppercase tracking-wide">Cons</p>
+              <ul className="space-y-1">{(m.cons || []).map((p, j) => <li key={j} className="text-slate-600 text-sm flex gap-2"><Icons.X className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />{p}</li>)}</ul>
+            </div>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+);
+
+const GROUP_ICON = { Skills: "Wrench", Tools: "Settings", Courses: "GraduationCap", Projects: "FolderGit2", Books: "BookOpen", YouTube: "Youtube" };
+const Blueprint = ({ s }) => (
+  <div className="space-y-5">
+    {s.items.map((ph, i) => (
+      <div key={i} className="rounded-3xl glass-card p-6" data-testid={`blueprint-phase-${i}`}>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="font-mono text-purple-600 text-sm">{ph.phase}</span>
+        </div>
+        {ph.focus && <p className="font-head font-700 text-slate-900 mb-4">{ph.focus}</p>}
+        <div className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
+          {(ph.groups || []).map((g, j) => {
+            const GIcon = Icons[GROUP_ICON[g.label]] || Icons.ChevronRight;
+            return (
+              <div key={j}>
+                <p className="text-xs font-700 text-indigo-600 mb-1.5 uppercase tracking-wide flex items-center gap-1.5"><GIcon className="w-3.5 h-3.5" />{g.label}</p>
+                <ul className="space-y-1">{g.items.map((it, k) => <li key={k} className="text-slate-600 text-sm flex gap-2"><Icons.Dot className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />{it}</li>)}</ul>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+const BLOCKS = { intro: Intro, callout: Callout, scorecards: ScoreCards, bars: Bars, matches: Matches, list: ListBlock, tags: Tags, cards: Cards, roadmap: Roadmap, salary_chart: SalaryChart, letter: Letter, recommendations: Recommendations, blueprint: Blueprint };
 
 export const ReportRenderer = ({ sections = [] }) => (
   <div data-testid="report-renderer">

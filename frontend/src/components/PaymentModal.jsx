@@ -49,7 +49,7 @@ export const PaymentModal = ({ submissionId, name, email, phone, addonIds = null
     if (!ok) { setStage("error"); return; }
     const rzp = new window.Razorpay({
       key: ord.key_id, amount: ord.amount, currency: ord.currency, order_id: ord.order_id,
-      name: "Career Blueprint AI", description: isAddon ? (ord.label || "Career Add-ons") : "Full Career Blueprint (PDF)",
+      name: "MapMyCareer", description: isAddon ? (ord.label || "Career Add-ons") : "Full MapMyCareer Report (PDF)",
       prefill: { name: name || "", email: email || "", contact: phone || "" },
       theme: { color: "#7C3AED" },
       handler: (resp) => finish({
@@ -82,7 +82,7 @@ export const PaymentModal = ({ submissionId, name, email, phone, addonIds = null
 
   const amount = order ? order.amount / 100 : (isAddon ? addonAmount : 199);
   const isLive = order?.mode === "live";
-  const productLabel = isAddon ? (addonLabel || "Career Add-ons") : (order?.plan === "professional" ? "Professional Career Intelligence Report" : "Student Career Blueprint");
+  const productLabel = isAddon ? (addonLabel || "Career Add-ons") : (order?.plan === "professional" ? "Professional Career Intelligence Report" : "Student Career Report");
 
   return (
     <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-6" data-testid="razorpay-mock-modal">
@@ -91,7 +91,7 @@ export const PaymentModal = ({ submissionId, name, email, phone, addonIds = null
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl grad-primary flex items-center justify-center"><Sparkles className="w-5 h-5 text-white" strokeWidth={2.2} /></div>
-            <div><p className="font-head font-700 text-sm leading-tight text-slate-900">Career Blueprint AI</p><p className="text-[11px] text-slate-400 font-mono">Secure Checkout</p></div>
+            <div><p className="font-head font-700 text-sm leading-tight text-slate-900">MapMyCareer</p><p className="text-[11px] text-slate-400 font-mono">Secure Checkout</p></div>
           </div>
           <button onClick={onClose} data-testid="payment-close-btn" className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
         </div>
@@ -135,7 +135,7 @@ export const PaymentModal = ({ submissionId, name, email, phone, addonIds = null
             )}
 
             {stage === "done" && (
-              <motion.div key="d" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="py-10 flex flex-col items-center text-center"><CheckCircle2 className="w-14 h-14 text-emerald-500 mb-4" /><p className="font-head font-700 text-xl text-slate-900">Payment Successful!</p><p className="text-slate-500 text-sm mt-1">{isAddon ? "Unlocking your add-ons…" : "Unlocking your full Career Blueprint…"}</p></motion.div>
+              <motion.div key="d" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="py-10 flex flex-col items-center text-center"><CheckCircle2 className="w-14 h-14 text-emerald-500 mb-4" /><p className="font-head font-700 text-xl text-slate-900">Payment Successful!</p><p className="text-slate-500 text-sm mt-1">{isAddon ? "Unlocking your add-ons…" : "Unlocking your full MapMyCareer report…"}</p></motion.div>
             )}
 
             {stage === "error" && (

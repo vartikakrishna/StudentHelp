@@ -7,6 +7,8 @@ from statistics import mean
 
 from careers import CAREER_BY_KEY, ai_risk_label, rank_careers, match_card, build_avoid_from_scored
 import career_db
+import content_lib
+import system_design
 from common import (
     clamp, num, as_list, traits_from_personality, trait_labels,
     build_interest_norm, salary_projection, sec, diagnostic_sections, action_roadmap, growth_sp,
@@ -80,6 +82,101 @@ def _cards_by_keys(keys: List[str], suit: int = 80) -> List[Dict[str, Any]]:
 def _preview(meta, headline, verdict, summary, scores):
     return {"product_name": meta["product"], "headline": headline, "verdict": verdict,
             "summary": summary, "scores": scores}
+
+
+def _pros_cons(m):
+    """Derive honest pros/cons from a career card's metrics."""
+    md, air = m.get("market_demand", 60), m.get("ai_risk", 40)
+    comp, diff = m.get("competition", 60), m.get("difficulty", 60)
+    sal = m.get("salary_mid") or (m.get("salary") or {}).get("mid", 10)
+    growth = m.get("growth", "")
+    pros, cons = [], []
+    if md >= 75:
+        pros.append(f"High market demand ({md}/100)")
+    if air <= 30:
+        pros.append("AI-resistant — hard to automate")
+    if sal and sal >= 15:
+        pros.append(f"Strong earning potential (~₹{sal} LPA mid-career)")
+    if growth in ("Strong", "Explosive", "High"):
+        pros.append(f"{growth} long-term growth")
+    if not pros:
+        pros.append("Stable, dependable career path")
+    if comp >= 78:
+        cons.append(f"Brutal competition ({comp}/100)")
+    if diff >= 78:
+        cons.append(f"Steep learning curve ({diff}/100)")
+    if air >= 55:
+        cons.append(f"{m.get('ai_risk_label', 'High AI risk')} — must specialise")
+    if md <= 55:
+        cons.append("Demand is soft / slow-growing")
+    if not cons:
+        cons.append("Requires consistent upskilling to stay ahead")
+    return pros[:3], cons[:3]
+
+
+def _recommendations(cards, n=5):
+    """Turn match/career cards into Top-N recommendation items (pros/cons/why/growth/AI-risk)."""
+    out = []
+    for m in cards[:n]:
+        pros, cons = _pros_cons(m)
+        out.append({
+            "key": m.get("key"), "title": m["title"], "icon": m.get("icon", "Sparkles"),
+            "score": m.get("score", m.get("suitability", 75)),
+            "why": m.get("verdict") or m.get("tagline") or "A strong match for your profile.",
+            "growth": m.get("growth"), "ai_risk": m.get("ai_risk", 40),
+            "ai_risk_label": m.get("ai_risk_label") or ai_risk_label(m.get("ai_risk", 40)),
+            "salary_mid": m.get("salary_mid") or (m.get("salary") or {}).get("mid"),
+            "pros": pros, "cons": cons,
+        })
+    return out
+
+
+def _grp(label, items):
+    items = [i for i in (items or []) if i]
+    return {"label": label, "items": items} if items else None
+
+
+def _learning_blueprint(career, years=4):
+    """Year 1→4 phased learning blueprint from curated resource libraries."""
+    r = content_lib.learning_for(career)
+    sk, tools, courses = r["skills"], r["tools"], r["courses"]
+    projects, books, yt = r["projects"], r["books"], r["youtube"]
+    phases = [
+        {"phase": "Year 1 — Foundations", "focus": "Build the fundamentals and a daily learning habit.",
+         "groups": [_grp("Skills", sk[:3]), _grp("Courses", courses[:2]), _grp("Tools", tools[:3]), _grp("Projects", projects[:1])]},
+        {"phase": "Year 2 — Build Depth", "focus": "Go deeper and start shipping real work.",
+         "groups": [_grp("Skills", sk[3:5] or sk[:2]), _grp("Courses", courses[2:4]), _grp("Projects", projects[1:3]), _grp("Books", books[:1])]},
+        {"phase": "Year 3 — Specialise & Get Visible", "focus": "Specialise, build a public portfolio, get noticed.",
+         "groups": [_grp("Skills", sk[5:7] or sk[2:4]), _grp("Projects", projects[2:4] or projects[-1:]), _grp("Books", books[1:3]), _grp("YouTube", yt[:3])]},
+        {"phase": "Year 4 — Job-Ready / Advanced", "focus": "Convert skills into internships, offers and proof.",
+         "groups": [_grp("Skills", ["Interview prep", "Networking", "Personal brand"]),
+                    _grp("Projects", ["A capstone / portfolio centrepiece", "An internship or open contribution"]),
+                    _grp("YouTube", yt[3:5] or yt[:2])]},
+    ]
+    for p in phases:
+        p["groups"] = [g for g in p["groups"] if g]
+    return phases[:years]
+
+
+def _degree_section(career, related=None):
+    """Best degrees / courses / certifications / universities as rich cards."""
+    r = content_lib.learning_for(career)
+    degrees = list(career.get("degrees", []))
+    for rc in (related or []):
+        for d in rc.get("degrees", []):
+            if d not in degrees:
+                degrees.append(d)
+    return sec("degrees", "Degree, Course & University Recommendations", "GraduationCap", "cards", items=[
+        {"title": "Best Degrees", "badges": [{"text": "Education path", "tone": "indigo"}], "body": "Degrees that lead directly into this field:", "points": degrees[:5] or ["Pick a degree aligned to the career above."]},
+        {"title": "Best Courses", "badges": [{"text": "Online", "tone": "cyan"}], "body": "High-signal courses to start now:", "points": r["courses"][:4]},
+        {"title": "Best Certifications", "badges": [{"text": "Credentials", "tone": "purple"}], "body": "Certifications that move the needle:", "points": r["certifications"][:4]},
+        {"title": "Best Universities / Institutes", "badges": [{"text": "Where to aim", "tone": "emerald"}], "body": "Aim here — but skills + proof beat brand:", "points": r["universities"][:4]},
+    ])
+
+
+def _wealth_note(sp):
+    lo, hi = sp["year10"], round(sp["year10"] * 1.8)
+    return f"By your 30s on this path: ~₹{sp['year5']}–{sp['year10']} LPA. Potential wealth range over 10 productive years: ₹{round(lo * 6 / 100, 1)}–{round(hi * 9 / 100, 1)} crore (with disciplined saving/investing)."
 
 
 LEVELS = {"None": 0, "Beginner": 25, "Intermediate": 50, "Advanced": 75, "Expert": 100, "": 30}
@@ -246,63 +343,61 @@ def analyze_student(profile: Dict[str, Any]) -> Dict[str, Any]:
               f"avoided, and started building skills while your friends were still confused. It wasn't always comfortable — but by your mid-20s "
               f"you were earning around ₹{sp['year5']} LPA and doing work that actually fits you. This is where that decision begins. Choose. Commit. Start.\n\n— Your Future Self")
 
+    # Required improvements (what to fix to earn the dream)
+    improve = []
+    if skills:
+        improve.append(f"Start building: {', '.join(skills[:3])}")
+    if dream["competition"] >= 75:
+        improve.append("Build standout proof early (projects/portfolio) — competition is brutal")
+    if dream["difficulty"] >= 75:
+        improve.append(f"Plan for {dream['time_to_enter']} of serious, consistent effort")
+    improve.append("Talk to 2 people already in this career this month")
+    dream_cards.append({
+        "title": "What you must improve to get there",
+        "badges": [{"text": "Action items", "tone": "indigo"}],
+        "body": "The gap between you and the dream, made concrete:",
+        "points": improve[:4],
+    })
+    readiness = int(clamp(round((success or career_match) * 0.85), 20, 92))
+    readiness_tone = "emerald" if readiness >= 65 else "amber" if readiness >= 45 else "rose"
+
     meta = PROFILE_META["Student"]
     sections = [
         sec("reality_check", "Your Career Reality Check", "Gauge", "intro", text=reality),
-        sec("snapshot", "Your Snapshot", "Activity", "scorecards", items=[
+        sec("dream_scores", "Dream Career Reality Check", "Target", "scorecards", items=[
             {"label": "Dream Career Match", "value": career_match, "suffix": "%", "tone": "indigo", "caption": dream_label},
+            {"label": "Current Readiness", "value": readiness, "suffix": "%", "tone": readiness_tone, "caption": "How ready you are now"},
             {"label": "Success Probability", "value": success or career_match, "suffix": "%", "tone": success_tone, "caption": "Realistic odds"},
-            {"label": "AI Resistance", "value": ai_resistance, "suffix": "%", "tone": "emerald", "caption": "How future-proof"},
         ]),
-        sec("dream_verdict", "Your Dream Career — Honest Verdict", "Target", "cards", items=dream_cards),
-        sec("matches", "Your Dream + Best-Fit Paths", "Compass", "matches", items=matches),
-        sec("degrees", "Best Degree & Stream Options", "BookOpen", "tags",
-            intro="Degrees that lead directly into your dream & best-fit careers:", items=degrees or ["Pick a degree aligned to your top career above, not just the 'popular' one."]),
-        sec("demand", "Future Industry Demand", "TrendingUp", "bars",
-            items=[{"label": m["title"], "value": m["market_demand"], "suffix": "%", "tone": "indigo"} for m in top3]),
-        sec("ai_proof", "AI-Proof Career Options", "ShieldCheck", "cards",
-            items=[{"title": m["title"], "badges": [{"text": m["ai_risk_label"], "tone": "emerald"}, {"text": f"~₹{m['salary_mid']} LPA", "tone": "cyan"}],
-                    "body": m["tagline"]} for m in ai_proof]),
-        sec("mistakes", "Career Mistakes To Avoid", "ShieldX", "cards", items=mistakes),
-        sec("skills", "Skills To Start Learning Now", "Wrench", "list",
-            intro="Don't wait for college. Start these now:", items=skills),
-        sec("learning_roadmap", "Your Learning Roadmap", "Map", "roadmap", items=[
-            {"phase": "Next 6 Months", "focus": "Explore & prove interest", "points": [f"Try a free intro course in {skills[0] if skills else dream_label}", "Build one tiny project / portfolio piece", "Talk to 2 people already in this field"]},
-            {"phase": "This Year", "focus": "Build foundations", "points": [f"Go deeper on {', '.join(skills[1:3]) if len(skills) > 2 else 'core skills'}", "Target the right degree & entrance exams", "Maintain marks but prioritise skills"]},
-            {"phase": "Before College", "focus": "Lock your direction", "points": ["Shortlist colleges aligned to your path", "Prepare entrance strategy", "Build a simple portfolio / GitHub / profile"]},
-            {"phase": "First Year of College", "focus": "Get ahead of peers", "points": ["Start internships early", "Join communities & competitions", "Keep compounding your top skill"]},
-        ]),
-        sec("growth", "10-Year Growth Projection", "LineChart", "salary_chart",
+        sec("dream_verdict", "Your Dream Career — Honest Verdict", "ShieldCheck", "cards", items=dream_cards),
+        sec("recommendations", "Top 5 Career Recommendations", "Compass", "recommendations", items=_recommendations(matches, 5)),
+        _degree_section(dream, gb["related"]),
+        sec("blueprint", "Your Learning Blueprint (Year 1 → 4)", "Map", "blueprint", items=_learning_blueprint(dream)),
+        sec("growth", "Financial Projection", "LineChart", "salary_chart",
             points=[{"label": "Start", "value": sp["year1"]}, {"label": "Year 3", "value": sp["year3"]},
                     {"label": "Year 5", "value": sp["year5"]}, {"label": "Year 10", "value": sp["year10"]}],
-            note=f"Projected earning trajectory on the {dream_label} path (₹ LPA)."),
-        sec("colleges", "College & Prep Recommendations", "Building", "list", intro="Where & how to aim:", items=colleges),
-        *diagnostic_sections(
-            risks=[
-                {"title": f"Drifting toward {avoid[0]['title']}", "badges": [{"text": avoid[0]["ai_risk_label"], "tone": "rose"}], "body": "A weak-fit, high-competition path quietly wastes your most valuable years."},
-                {"title": "Following pressure, not fit", "badges": [{"text": "Common trap", "tone": "amber"}], "body": "Choosing a career to please others or chase prestige is the #1 regret students have years later."},
-                {"title": "Chasing the dream with zero backup", "badges": [{"text": "Costly", "tone": "amber"}], "body": "Going all-in with no related fallback means one setback can end the dream. Keep a backup alive."}],
-            opportunities=[
-                {"title": f"Lean into {ai_proof[0]['title']}", "body": f"An AI-resistant, well-matched path ({ai_proof[0]['ai_risk_label']}) — start early and you'll be years ahead of peers."},
-                {"title": "Build skills before college", "body": "Most students wait. The ones who start projects and skills now enter college already ahead."},
-                {"title": "Early internships & communities", "body": "Real exposure beats theory — it compounds into clarity and opportunities."}],
-            focus=[f"Commit to {dream_label} and build proof", f"Start learning {skills[0] if skills else 'your top skill'}", "Plan the right degree & entrance strategy", "Keep one related backup career alive"],
-            stop=["Keeping every option open out of fear", "Choosing a path only for prestige or pressure", "Chasing marks while ignoring real skills", "Comparing your start to everyone else's"]),
-        action_roadmap(
-            {"focus": "Explore with intent", "points": [f"Try a free intro to {skills[0] if skills else dream_label}", "Talk to 2 people in that career", "Confirm your direction"]},
-            {"focus": "Build foundations", "points": ["Start core skills + entrance prep", "Ship one small project", "Maintain marks without obsessing"]},
-            {"focus": "Commit & get ahead", "points": ["Lock your degree & college shortlist", "Build a simple portfolio/profile", "Start early internships / competitions"]}),
+            note=_wealth_note(sp) + f" Path: {dream_label} (₹ LPA)."),
+        sec("mistakes", "Career Mistakes To Avoid", "ShieldX", "cards", items=mistakes),
+        sec("action_30", "Your 30-Day Action Plan", "Rocket", "roadmap", items=[
+            {"phase": "Week 1-2", "focus": "Decide & explore", "points": [f"Try a free intro to {skills[0] if skills else dream_label}", "Watch 2 day-in-the-life videos of this career", "Write down WHY you want it"]},
+            {"phase": "Week 3-4", "focus": "First proof", "points": ["Start one small project or course module", "Reach out to 1 person in the field", "Set up a simple profile (GitHub/portfolio/LinkedIn)"]},
+        ]),
+        sec("action_90", "Your 90-Day Action Plan", "CalendarCheck", "roadmap", items=[
+            {"phase": "Month 1", "focus": "Foundations", "points": [f"Build the first foundational skill: {skills[0] if skills else 'core basics'}", "Maintain academics without obsessing", "Confirm your direction is right"]},
+            {"phase": "Month 2", "focus": "Build & ship", "points": [f"Go deeper: {', '.join(skills[1:3]) if len(skills) > 2 else 'next skills'}", "Ship one tiny project end-to-end", "Plan the right degree & entrance exams"]},
+            {"phase": "Month 3", "focus": "Lock direction", "points": ["Shortlist colleges/exams aligned to your path", "Add a second portfolio piece", "Join a community or competition"]},
+        ]),
         sec("letter", "A Letter From Your Future Self", "Mail", "letter", text=letter),
     ]
     preview = _preview(meta, f"{name}, your clearest career direction is ready.",
                        f"Your dream — {dream_label} — is a {career_match}% match ({dream['verdict'].lower()}).",
-                       "Career discovery report — your dream career verdict, related backups, the right degree, AI-proof options and a 10-year plan.",
+                       "Career decision report — dream career reality check, top-5 recommendations, degrees & universities, a Year 1-4 learning blueprint, financial projection and 30/90-day action plans.",
                        [{"label": "Dream Career Match", "value": career_match, "suffix": "%", "locked": False},
-                        {"label": "Personality Fit", "value": personality_fit, "suffix": "%", "locked": False},
+                        {"label": "Current Readiness", "value": readiness, "suffix": "%", "locked": False},
                         {"label": "Success Probability", "locked": True},
-                        {"label": "Related Backup Careers", "locked": True},
-                        {"label": "Future Income Potential", "locked": True},
-                        {"label": "10-Year Salary Forecast", "locked": True}])
+                        {"label": "Top 5 Career Recommendations", "locked": True},
+                        {"label": "Year 1-4 Learning Blueprint", "locked": True},
+                        {"label": "Financial Projection", "locked": True}])
 
     return _wrap(profile, meta, reality, sections, preview, matches, skills, sp,
                  extra={"ai_resistance_score": ai_resistance, "career_match": career_match,
@@ -380,49 +475,74 @@ def analyze_it(profile: Dict[str, Any]) -> Dict[str, Any]:
               f"used it — and stacked the skills it can't replace: design, systems, taste and trust. Today you're a {best_role['title']}-grade "
               f"engineer earning around ₹{sp['year5']} LPA, and 'will AI take my job' is a question other people ask. This is where that pivot starts.\n\n— Your Future Self")
 
+    career_health = int(clamp(round(ai_resistance * 0.4 + future_demand * 0.3 + salary_growth * 0.3), 25, 96))
+    health_tone = "emerald" if career_health >= 65 else "amber" if career_health >= 45 else "rose"
+    current_skills = [s.title() for s in (as_list(a.get("tech_stack")) + as_list(a.get("languages")))][:8] or ["Add your tech stack to see this"]
+    # Future career tracks (real metrics + pros/cons)
+    track_names = ["AI Engineer", "Cloud Architect", "Cybersecurity", "Data Scientist", "Software Engineer", "Product Manager"]
+    track_cards, seen_t = [], set()
+    for nm in track_names:
+        c, _ = career_db.resolve_career(nm)
+        if not c or c["key"] in seen_t:
+            continue
+        seen_t.add(c["key"])
+        feas = int(clamp(round((cloud + sysd + ai_k) / 3 * 0.5 + min(exp, 10) * 3 + (100 - c["difficulty"]) * 0.2 + 15), 30, 95))
+        track_cards.append(career_db._card(c, feas))
+    track_cards.sort(key=lambda x: x["score"], reverse=True)
+    sd_blueprint = system_design.system_design_blueprint(exp, sysd)
+
+    ai_cards = [
+        {"title": f"Risk Level: {ai_risk_label(ai_risk)}", "badges": [{"text": f"{ai_risk}%", "tone": risk_tone}],
+         "body": "Your role's realistic exposure to AI automation over the next 3-5 years."},
+        {"title": "Why", "badges": [{"text": "The honest reason", "tone": "amber"}],
+         "body": f"As a {dev_type.lower()}, the routine parts of your work — boilerplate, simple CRUD, basic tests — are exactly what AI copilots already do well. "
+                 f"{'Low AI/system-design depth widens that exposure.' if (ai_k < 50 or sysd < 50) else 'Your depth in design/AI is what protects you.'}",
+         "points": ["Routine coding is being automated fastest", "Single-layer skills are easiest to replace", "Judgement, design & ownership are not"]},
+        {"title": "How To Stay Relevant", "badges": [{"text": "Your moat", "tone": "emerald"}],
+         "body": "Stack the skills AI can't replace:",
+         "points": ["Use AI tooling daily — out-ship, don't compete", "Go deep on system design & architecture", "Own systems end-to-end (judgement + reliability)", "Specialise in AI/ML or security"]},
+    ]
+    skill_gap_cards = [
+        {"title": "Your Current Skills", "badges": [{"text": "What you have", "tone": "emerald"}], "body": "Skills you bring today:", "points": current_skills},
+        {"title": "Missing Skills", "badges": [{"text": "Close these first", "tone": "rose"}], "body": "In-demand skills you're missing:", "points": gaps or ["Your stack is solid — go deeper on system design + AI."]},
+        {"title": "Future Skills", "badges": [{"text": "Next decade", "tone": "indigo"}], "body": "Where the high pay is heading:", "points": EMERGING_TECH[:5]},
+    ]
+
     meta = PROFILE_META["IT Employee"]
     sections = [
         sec("reality_check", "Your AI Reality Check", "Bot", "intro", text=reality),
-        sec("snapshot", "Your AI-Survival Snapshot", "Activity", "scorecards", items=[
+        sec("snapshot", "Your Career Health Score", "Activity", "scorecards", items=[
+            {"label": "Career Health Score", "value": career_health, "suffix": "%", "tone": health_tone, "caption": "Overall standing"},
             {"label": "AI Replacement Risk", "value": ai_risk, "suffix": "%", "tone": risk_tone, "caption": ai_risk_label(ai_risk)},
-            {"label": "Future Demand", "value": future_demand, "suffix": "%", "tone": "indigo", "caption": "For your trajectory"},
             {"label": "AI Resistance", "value": ai_resistance, "suffix": "%", "tone": "emerald", "caption": "How defensible"},
         ]),
-        sec("threat", "AI Threat Assessment", "ShieldAlert", "bars", items=[
+        sec("ai_risk", "AI Replacement Risk", "ShieldAlert", "cards", items=ai_cards),
+        sec("threat", "AI Threat Assessment", "Gauge", "bars", items=[
             {"label": "Routine coding (AI copilots)", "value": int(clamp(ai_risk + 15, 10, 99)), "suffix": "%", "tone": "rose"},
             {"label": "Your current role", "value": ai_risk, "suffix": "%", "tone": risk_tone},
             {"label": "System design & architecture", "value": int(clamp(100 - sysd, 10, 80)), "suffix": "%", "tone": "amber"},
             {"label": "AI / ML specialisation", "value": int(clamp(40 - ai_k * 0.3, 8, 45)), "suffix": "%", "tone": "emerald"},
         ]),
-        sec("transitions", "Transition Opportunities", "Repeat", "cards", items=transitions[:4]),
+        sec("skill_gap", "Skill Gap Analysis", "Puzzle", "cards", items=skill_gap_cards),
+        sec("system_design", "System Design Roadmap (Level 1 → 4)", "Network", "blueprint", items=sd_blueprint),
+        sec("future_tracks", "Future Career Tracks", "GitBranch", "recommendations", items=_recommendations(track_cards, 5)),
         *([fd_section] if fd_section else []),
-        sec("gaps", "Your Tech Skill Gaps", "Puzzle", "tags", intro="In-demand skills you're missing (close these first):", items=gaps or ["Your stack is solid — go deeper on system design + AI."]),
-        sec("emerging", "Best Emerging Technologies", "Rocket", "tags", intro="Where the next decade of high pay is heading:", items=EMERGING_TECH),
-        sec("tech_roadmap", "Future Tech Roadmap", "Map", "roadmap", items=[
-            {"phase": "0-30 Days", "focus": "Stop the bleeding", "points": ["Daily reps with AI tooling on real work", f"Start {gaps[0] if gaps else 'system design'}", "Audit your role vs what AI already does"]},
-            {"phase": "30-90 Days", "focus": "Move up the value chain", "points": [f"Ship a project using {learn[0]}", "Lead one design discussion", "Open-source or write about your work"]},
-            {"phase": "3-6 Months", "focus": "Specialise", "points": [f"Go deep on {', '.join(learn[1:3])}", "Earn one credible certification", "Target a higher-leverage role internally"]},
-            {"phase": "6-12 Months", "focus": "Become AI-proof", "points": ["Own a system end-to-end", "Mentor / build reputation", "Negotiate up or switch with leverage"]},
-        ]),
-        sec("salary", "Salary Growth Plan", "TrendingUp", "salary_chart",
+        sec("salary", "Salary Projection", "TrendingUp", "salary_chart",
             points=[{"label": "Now", "value": sp["year1"]}, {"label": "Year 3", "value": sp["year3"]},
                     {"label": "Year 5", "value": sp["year5"]}, {"label": "Year 10", "value": sp["year10"]}],
-            note="Projected trajectory if you execute the roadmap (₹ LPA)."),
-        *diagnostic_sections(
-            risks=[
-                {"title": "Replaced by AI copilots", "badges": [{"text": ai_risk_label(ai_risk), "tone": risk_tone}], "body": "If most of your day is what an AI assistant already does well, your role is exposed."},
-                {"title": "Falling behind on AI tooling", "badges": [{"text": "Skill decay", "tone": "amber"}], "body": "Engineers who don't use AI daily are being out-shipped by those who do."},
-                {"title": "Narrow, replaceable skillset", "badges": [{"text": "Gap", "tone": "amber"}], "body": "Single-layer skills (only frontend, only manual QA) are the easiest to automate or offshore."}],
-            opportunities=[
-                {"title": f"Move toward {transitions[0]['title'] if transitions else 'higher-leverage roles'}", "body": "Higher-judgement roles AI can't do are where pay and security are heading."},
-                {"title": "Specialise in AI / systems", "body": "AI engineering and system design are the most defensible, best-paid directions."},
-                {"title": "Own systems end-to-end", "body": "Ownership and architecture beat raw coding speed in the AI era."}],
-            focus=[f"Close your top gap: {gaps[0] if gaps else 'system design'}", "Use AI tooling on real work daily", "Go deep on system design", "Plan a move up the value chain"],
-            stop=["Doing only what AI copilots already do", "Avoiding AI tools out of pride", "Staying in a comfortable, replaceable role", "Collecting tutorials without shipping"]),
-        action_roadmap(
-            {"focus": "Stop the bleeding", "points": ["Use AI tooling on real work daily", f"Start {gaps[0] if gaps else 'system design'}", "Audit your role vs AI"]},
-            {"focus": "Move up the chain", "points": [f"Ship a project using {learn[0] if learn else 'a modern skill'}", "Lead one design discussion", "Build reputation (OSS / writing)"]},
-            {"focus": "Become AI-proof", "points": ["Own a system end-to-end", "Earn a credible certification", "Negotiate up or switch with leverage"]}),
+            note=_wealth_note(sp) + " Trajectory assumes you execute the roadmap (₹ LPA)."),
+        sec("promotion", "Promotion Readiness", "BarChart3", "bars", items=[
+            {"label": "System design depth", "value": sysd, "suffix": "%", "tone": "indigo"},
+            {"label": "AI / ML knowledge", "value": ai_k, "suffix": "%", "tone": "purple"},
+            {"label": "Leadership signal", "value": int(round(traits["leadership"] * 100)), "suffix": "%", "tone": "cyan"},
+            {"label": "Experience & tenure", "value": int(clamp(round(min(exp, 12) / 12 * 100), 10, 100)), "suffix": "%", "tone": "amber"},
+        ]),
+        sec("learning_plan", "Your Learning Plan", "Map", "roadmap", items=[
+            {"phase": "30 Days", "focus": "Stop the bleeding", "points": ["Daily reps with AI tooling on real work", f"Start {gaps[0] if gaps else 'system design L1'}", "Audit your role vs what AI already does"]},
+            {"phase": "90 Days", "focus": "Move up the value chain", "points": [f"Ship a project using {learn[0]}", "Lead one design discussion", "Open-source or write about your work"]},
+            {"phase": "6 Months", "focus": "Specialise", "points": [f"Go deep on {', '.join(learn[1:3])}", "Reach System Design Level 3", "Earn one credible certification"]},
+            {"phase": "1 Year", "focus": "Become AI-proof", "points": ["Own a system end-to-end", "Mentor / build reputation", "Negotiate up or switch with leverage"]},
+        ]),
         sec("verdict", "Your AI-Survival Verdict", "Flag", "callout", tone=risk_tone, label=ai_risk_label(ai_risk), text=verdict),
         sec("letter", "A Letter From Your Future Self", "Mail", "letter", text=letter),
     ]
@@ -499,13 +619,30 @@ def analyze_professional(profile: Dict[str, Any]) -> Dict[str, Any]:
               f"made your impact measurable, and positioned yourself for {desired}. Today you earn around ₹{sp['year5']} LPA and people "
               f"bring you the hard problems. The version of you reading this is exactly where that shift begins. Lead now.\n\n— Your Future Self")
 
+    income_growth = int(clamp(round((sp["year5"] - sp["year1"]) / max(sp["year1"], 1) * 100), 20, 99))
+    # Future career options (recommendations) — use resolved direction matches or sensible defaults
+    opt_cards = list(matches)
+    if not opt_cards:
+        for nm in ["Product Manager", "Management Consultant", "Operations Manager", "Sales Manager"]:
+            c, _ = career_db.resolve_career(nm)
+            if c:
+                opt_cards.append(career_db._card(c, int(clamp(round(career_growth), 40, 92))))
+    skill_gap_cards = [
+        {"title": "Your Current Strengths", "badges": [{"text": "What you have", "tone": "emerald"}], "body": "Built over your career so far:",
+         "points": [f"{int(exp)} years of domain experience", "Execution & reliability", trait_labels(traits)[0] + " strength"]},
+        {"title": "Skill Gaps To Close", "badges": [{"text": "Fix first", "tone": "rose"}], "body": "What's between you and the next level:",
+         "points": ["Executive communication & visibility", "Strategic / commercial thinking", "Stakeholder & sponsor management"]},
+        {"title": "Future Skills", "badges": [{"text": "Stay ahead", "tone": "indigo"}], "body": "Where leadership value is heading:",
+         "points": ["AI-augmented decision making", "Data-driven leadership", "Cross-functional influence", "Personal brand & thought leadership"]},
+    ]
+
     meta = PROFILE_META["Working Professional"]
     sections = [
         sec("reality_check", "Your Growth Reality Check", "Gauge", "intro", text=reality),
         sec("snapshot", "Your Growth Snapshot", "Activity", "scorecards", items=[
-            {"label": "Promotion Potential", "value": promotion_potential, "suffix": "%", "tone": "indigo", "caption": f"Toward {desired}"},
-            {"label": "Career Growth", "value": career_growth, "suffix": "%", "tone": "purple", "caption": "Overall trajectory"},
+            {"label": "Promotion Readiness", "value": promotion_potential, "suffix": "%", "tone": "indigo", "caption": f"Toward {desired}"},
             {"label": "Leadership Potential", "value": leadership_potential, "suffix": "%", "tone": "cyan", "caption": "Your ceiling"},
+            {"label": "Income Growth Potential", "value": income_growth, "suffix": "%", "tone": "emerald", "caption": "5-yr upside"},
         ]),
         sec("readiness", "Promotion Readiness Breakdown", "BarChart3", "bars", items=[
             {"label": "Leadership signal", "value": leadership_potential, "suffix": "%", "tone": "indigo"},
@@ -513,10 +650,14 @@ def analyze_professional(profile: Dict[str, Any]) -> Dict[str, Any]:
             {"label": "Tenure & experience", "value": int(clamp(round(min(exp, 15) / 15 * 100), 10, 100)), "suffix": "%", "tone": "cyan"},
             {"label": "Communication & visibility", "value": int(round(traits["communication"] * 100)), "suffix": "%", "tone": "amber"},
         ]),
-        sec("salary", "Salary Forecast", "TrendingUp", "salary_chart",
+        sec("outlook", "Industry Outlook", "Building2", "callout", tone="indigo" if ind_demand >= 70 else "amber", label=f"{industry} — {ind_demand}% demand", text=outlook),
+        sec("future_options", "Future Career Options", "GitBranch", "recommendations", items=_recommendations(opt_cards, 4)),
+        *([fd_section] if fd_section else []),
+        sec("skill_gap", "Skill Gap Analysis", "Puzzle", "cards", items=skill_gap_cards),
+        sec("salary", "Financial Projection", "TrendingUp", "salary_chart",
             points=[{"label": "Now", "value": sp["year1"]}, {"label": "Year 3", "value": sp["year3"]},
                     {"label": "Year 5", "value": sp["year5"]}, {"label": "Year 10", "value": sp["year10"]}],
-            note=f"Realistic trajectory ({'feasibility ' + str(feasible) + '% for your target' if cur_sal else 'estimate'}). ₹ LPA."),
+            note=_wealth_note(sp) + (f" Feasibility for your target: {feasible}%." if cur_sal else "") + " ₹ LPA."),
         sec("leadership", "Leadership Analysis", "Crown", "cards", items=[
             {"title": "Your leadership style", "badges": [{"text": "Team Player" if traits["team"] else "Independent Operator", "tone": "indigo"}, {"text": trait_labels(traits)[0], "tone": "purple"}],
              "body": f"You lead best as a {'collaborative' if traits['team'] else 'directive, autonomous'} operator with {'high' if traits['communication'] >= 0.6 else 'developing'} communication confidence.",
@@ -524,28 +665,16 @@ def analyze_professional(profile: Dict[str, Any]) -> Dict[str, Any]:
             {"title": "Biggest growth gap", "badges": [{"text": "Fix this first", "tone": "rose"}],
              "body": "Most professionals plateau on visibility and strategic positioning, not capability. Make your wins legible to decision-makers."},
         ]),
-        sec("outlook", "Industry Outlook", "Building2", "callout", tone="indigo" if ind_demand >= 70 else "amber", label=f"{industry} — {ind_demand}% demand", text=outlook),
-        *([fd_section] if fd_section else []),
-        sec("growth_roadmap", "Your Growth Roadmap", "Map", "roadmap", items=[
-            {"phase": "Next 90 Days", "focus": "Become visible", "points": ["Own one high-impact, measurable project", "Build a relationship with your skip-level", "Quantify and broadcast your wins"]},
-            {"phase": "6 Months", "focus": "Lead beyond your role", "points": [f"Develop {learn[0]} & {learn[1]}", "Take on cross-functional leadership", "Close one strategic skill gap"]},
-            {"phase": "12 Months", "focus": "Earn the next level", "points": [f"Position explicitly for {desired}", "Build a sponsor, not just mentors", "Negotiate with documented impact"]},
+        sec("growth_90", "Your 90-Day Growth Plan", "Rocket", "roadmap", items=[
+            {"phase": "Month 1", "focus": "Become visible", "points": ["Own one high-impact, measurable project", "Build a relationship with your skip-level", "Start quantifying your wins"]},
+            {"phase": "Month 2", "focus": "Lead beyond your role", "points": [f"Develop {learn[0]} & {learn[1]}", "Take on cross-functional leadership", "Broadcast results to decision-makers"]},
+            {"phase": "Month 3", "focus": "Position for the next level", "points": ["Close one strategic skill gap", f"Signal intent for {desired}", "Find a sponsor, not just mentors"]},
         ]),
-        *diagnostic_sections(
-            risks=[
-                {"title": "Invisible to decision-makers", "badges": [{"text": "Promotion-blocker", "tone": "rose"}], "body": "Hard work that skip-levels never see doesn't get promoted. Visibility is the real gate."},
-                {"title": "Plateauing on skill alone", "badges": [{"text": "Ceiling", "tone": "amber"}], "body": "Past a point, capability stops differentiating you — positioning and leadership do."},
-                {"title": f"{industry} automation exposure", "badges": [{"text": ai_risk_label(ind_risk), "tone": "amber" if ind_risk < 45 else "rose"}], "body": "Stay in the high-judgement, AI-resistant parts of your field."}],
-            opportunities=[
-                {"title": "Own a high-impact project", "body": "One visible, measurable win moves you more than a year of quiet reliability."},
-                {"title": "Find a sponsor", "body": "Mentors advise; sponsors promote. Most professionals only build mentors."},
-                {"title": f"Position for {desired}", "body": "Explicitly signalling your target role shapes how leaders see you."}],
-            focus=["Own one visible, measurable initiative", f"Develop {learn[0]} & {learn[1]}", "Build a sponsor relationship", f"Position explicitly for {desired}"],
-            stop=["Working harder while staying invisible", "Waiting to be noticed", "Measuring yourself only on output", "Ignoring the strategic / political side of growth"]),
-        action_roadmap(
-            {"focus": "Become visible", "points": ["Own one high-impact project", "Build a skip-level relationship", "Quantify & broadcast your wins"]},
-            {"focus": "Lead beyond your role", "points": [f"Develop {learn[0]} & {learn[1]}", "Take cross-functional leadership", "Close one strategic gap"]},
-            {"focus": "Earn the next level", "points": [f"Position for {desired}", "Build a sponsor", "Negotiate with documented impact"]}),
+        sec("growth_year", "Your 1-Year Growth Plan", "CalendarCheck", "roadmap", items=[
+            {"phase": "Q1-Q2", "focus": "Build leadership signal", "points": ["Lead a visible initiative end-to-end", "Develop executive communication", "Build measurable impact"]},
+            {"phase": "Q3", "focus": "Expand influence", "points": ["Take cross-functional ownership", "Cultivate a senior sponsor", "Close strategic gaps"]},
+            {"phase": "Q4", "focus": "Earn the next level", "points": [f"Position explicitly for {desired}", "Negotiate with documented impact", "Mentor to multiply leverage"]},
+        ]),
         sec("letter", "A Letter From Your Future Self", "Mail", "letter", text=letter),
     ]
     preview = _preview(meta, f"{name}, your career growth report is ready.",

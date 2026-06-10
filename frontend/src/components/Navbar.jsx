@@ -22,7 +22,7 @@ export const Navbar = ({ onStart }) => {
             <Sparkles className="w-5 h-5 text-white" strokeWidth={2.2} />
           </div>
           <span className="font-head font-700 text-lg tracking-tight text-slate-900">
-            Career Blueprint <span className="text-gradient">AI</span>
+            MapMy<span className="text-gradient">Career</span>
           </span>
         </div>
         <CTAButton testid="nav-start-btn" onClick={onStart} size="sm" icon={false}>

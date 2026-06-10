@@ -41,6 +41,8 @@ const CLASSES = ["Class 9", "Class 10", "Class 11", "Class 12", "Diploma", "1st 
 const MARKS = ["Below 50%", "50-60%", "60-75%", "75-85%", "85-95%", "95%+"];
 const STUDY_HABITS = ["Very consistent", "Consistent", "On & off", "Last-minute", "Struggling"];
 const LEARNING_STYLE = ["Visual", "Listening", "Reading / Writing", "Hands-on / Practical"];
+const FINANCIAL_EXP = ["Stability over money", "₹5-10 LPA is enough", "₹10-25 LPA target", "₹25 LPA+ / high earner", "Wealth / business owner"];
+const LIFESTYLE = ["Stable 9-5 with balance", "High growth, high intensity", "Creative & flexible", "Travel / location-free", "Own business / independent", "Impact / service-driven"];
 
 const DEVELOPER_TYPES = ["Frontend Developer", "Backend Developer", "Full Stack Developer", "Mobile Developer", "DevOps / Platform Engineer", "Data Engineer", "ML / AI Engineer", "Security Engineer", "Embedded Engineer", "QA / Test Engineer", "Support Engineer", "Other"];
 const LEVELS = ["None", "Beginner", "Intermediate", "Advanced", "Expert"];
@@ -114,8 +116,12 @@ const STUDENT_STEPS = [
     { key: "career_interests", label: "Career Interests", type: "multiselect", options: CAREER_INTERESTS, required: true },
     { key: "dream_career", label: "Your Dream Career", type: "text", placeholder: "e.g. Game Developer", half: true },
     { key: "parents_preferred", label: "Parents' Preferred Career", type: "text", placeholder: "e.g. Doctor", half: true },
-    { key: "study_habits", label: "Study Habits", type: "select", options: STUDY_HABITS, half: true },
-    { key: "learning_style", label: "Learning Style", type: "select", options: LEARNING_STYLE, half: true } ] },
+    { key: "study_habits", label: "Study Discipline", type: "select", options: STUDY_HABITS, half: true },
+    { key: "learning_style", label: "Learning Style", type: "select", options: LEARNING_STYLE, half: true },
+    { key: "financial_expectations", label: "Financial Expectations", type: "select", options: FINANCIAL_EXP, half: true },
+    { key: "desired_lifestyle", label: "Desired Lifestyle", type: "select", options: LIFESTYLE, half: true },
+    { key: "technology_interest", label: "Technology Interest", type: "slider" },
+    { key: "creativity_level", label: "Creativity Level", type: "slider" } ] },
 ];
 
 const IT_STEPS = [
@@ -131,7 +137,10 @@ const IT_STEPS = [
     { key: "ai_knowledge", label: "AI / ML Knowledge", type: "select", options: LEVELS, required: true, half: true },
     { key: "system_design", label: "System Design Knowledge", type: "select", options: LEVELS, required: true, half: true },
     { key: "open_source", label: "Open Source Contributions", type: "select", options: OPEN_SOURCE, half: true },
-    { key: "future_goal", label: "Your Future Direction (target role)", type: "text", placeholder: "e.g. AI Engineer, Solutions Architect", half: true } ] },
+    { key: "team_size", label: "Team Size You Work With", type: "select", options: TEAM_SIZE, half: true },
+    { key: "leadership_experience", label: "Leadership Experience", type: "select", options: LEAD_RESP, half: true },
+    { key: "future_goal", label: "Career Goal / Desired Role", type: "text", placeholder: "e.g. AI Engineer, Solutions Architect", half: true },
+    { key: "desired_salary", label: "Desired Salary (₹ LPA)", type: "number", placeholder: "e.g. 40", half: true } ] },
 ];
 
 const PRO_STEPS = [

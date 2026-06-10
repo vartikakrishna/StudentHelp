@@ -159,14 +159,14 @@ const STUDENT_FEATURES = [
 export const PLAN_CONFIG = {
   student: {
     key: "student",
-    name: "Student Career Blueprint",
+    name: "Student Career Report",
     price: 199,
     original: 999,
     headline: "Don't Waste 4 Years Preparing For The Wrong Career.",
     subheadline: "Discover the path where your skills, interests and future opportunities align.",
     perfectFor: ["School Students", "College Students", "Fresh Graduates"],
     features: STUDENT_FEATURES,
-    ctaText: "Unlock My Student Career Blueprint",
+    ctaText: "Unlock My Career Report",
     footnote: "Less than the cost of one movie night.",
   },
   professional: {

@@ -41,7 +41,8 @@ def plan_for(user_type: str):
 
 RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
 RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
-PAYMENT_MODE = 'live' if (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) else 'mock'
+# Optional override (e.g. PAYMENT_MODE=mock on staging); otherwise live when keys are present.
+PAYMENT_MODE = os.environ.get('PAYMENT_MODE') or ('live' if (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) else 'mock')
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -111,7 +112,7 @@ def num_or(v, default=0.0):
 # ----------------------- Routes -----------------------
 @api_router.get("/")
 async def root():
-    return {"message": "Career Blueprint AI", "payment_mode": PAYMENT_MODE}
+    return {"message": "MapMyCareer", "payment_mode": PAYMENT_MODE}
 
 
 @api_router.post("/regret")

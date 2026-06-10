@@ -97,7 +97,7 @@ def _bg(canvas, doc):
     canvas.line(20 * mm, PAGE_H - 16 * mm, PAGE_W - 20 * mm, PAGE_H - 16 * mm)
     canvas.setFillColor(MUTE)
     canvas.setFont("Helvetica", 8)
-    canvas.drawString(20 * mm, 11 * mm, "CAREER BLUEPRINT AI  ·  Brutally honest career intelligence")
+    canvas.drawString(20 * mm, 11 * mm, "MAPMYCAREER  ·  Brutally honest career intelligence")
     canvas.drawRightString(PAGE_W - 20 * mm, 11 * mm, f"{doc.page}")
     canvas.restoreState()
 
@@ -226,6 +226,47 @@ def _section_block(e, s, st, cw):
         if s.get("note"):
             e.append(Paragraph(s["note"], st["small"]))
 
+    elif stype == "recommendations":
+        for m in s.get("items", []):
+            head = Table([[Paragraph(m.get("title", ""), st["card_title"]), Paragraph(f"<b>{m.get('score','')}%</b> fit", st["tag"])]], colWidths=[cw - 80, 60])
+            head.setStyle(TableStyle([("ALIGN", (1, 0), (1, 0), "RIGHT"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+            parts = [head, Spacer(1, 2)]
+            badge_bits = []
+            if m.get("growth"):
+                badge_bits.append(f"<font color='#10B981'>{m['growth']} growth</font>")
+            if m.get("ai_risk_label"):
+                badge_bits.append(f"<font color='{_hex('amber') if m.get('ai_risk',0) <= 55 else _hex('rose')}'>{m['ai_risk_label']}</font>")
+            if m.get("salary_mid") is not None:
+                badge_bits.append(f"<font color='#06B6D4'>~Rs {m['salary_mid']} LPA</font>")
+            if badge_bits:
+                parts.append(Paragraph(" · ".join(badge_bits), st["tag"]))
+            if m.get("why"):
+                parts.append(Spacer(1, 3))
+                parts.append(Paragraph(f"<b>Why it fits:</b> {m['why']}", st["small"]))
+            if m.get("pros"):
+                parts.append(Spacer(1, 2))
+                parts.append(Paragraph("<font color='#10B981'><b>Pros</b></font>", st["tag"]))
+                for p in m["pros"]:
+                    parts.append(Paragraph(f"&bull;&nbsp;{p}", st["small"]))
+            if m.get("cons"):
+                parts.append(Paragraph("<font color='#E11D48'><b>Cons</b></font>", st["tag"]))
+                for p in m["cons"]:
+                    parts.append(Paragraph(f"&bull;&nbsp;{p}", st["small"]))
+            e.append(_card(parts, cw))
+            e.append(Spacer(1, 4 * mm))
+
+    elif stype == "blueprint":
+        for ph in s.get("items", []):
+            parts = [Paragraph(f"<font color='#7C3AED'><b>{ph.get('phase','')}</b></font>", st["card_title"])]
+            if ph.get("focus"):
+                parts.append(Paragraph(ph["focus"], st["small"]))
+            for g in ph.get("groups", []):
+                parts.append(Spacer(1, 2))
+                parts.append(Paragraph(f"<font color='#4F46E5'><b>{g.get('label','')}</b></font>", st["tag"]))
+                parts.append(Paragraph(", ".join(g.get("items", [])), st["small"]))
+            e.append(_card(parts, cw))
+            e.append(Spacer(1, 3 * mm))
+
     e.append(Spacer(1, 6 * mm))
 
 
@@ -233,7 +274,7 @@ def build_pdf(submission: Dict[str, Any]) -> bytes:
     st = _styles()
     r = submission["report"]
     name = submission.get("name", "You")
-    product = r.get("product_name", "Career Blueprint")
+    product = r.get("product_name", "MapMyCareer")
     headline = r.get("headline", "Your Career Truth Report")
     buf = io.BytesIO()
 
@@ -249,7 +290,7 @@ def build_pdf(submission: Dict[str, Any]) -> bytes:
 
     e: List[Any] = []
     e.append(Spacer(1, 60 * mm))
-    e.append(Paragraph("CAREER BLUEPRINT AI", st["kicker"]))
+    e.append(Paragraph("MAPMYCAREER", st["kicker"]))
     e.append(Spacer(1, 4 * mm))
     e.append(Paragraph(product, st["cover_title"]))
     e.append(Spacer(1, 8 * mm))
@@ -262,7 +303,7 @@ def build_pdf(submission: Dict[str, Any]) -> bytes:
     for i, s in enumerate(r.get("sections", [])):
         _section_block(e, s, st, cw)
         # light pacing: page break after heavy sections
-        if s.get("type") in ("matches", "roadmap") and i < len(r["sections"]) - 1:
+        if s.get("type") in ("matches", "roadmap", "recommendations", "blueprint") and i < len(r["sections"]) - 1:
             e.append(PageBreak())
 
     doc.build(e)
@@ -288,7 +329,7 @@ def build_addon_pdf(submission: Dict[str, Any], component_id: str) -> bytes:
 
     e: List[Any] = []
     e.append(Spacer(1, 66 * mm))
-    e.append(Paragraph("CAREER BLUEPRINT AI", st["kicker"]))
+    e.append(Paragraph("MAPMYCAREER", st["kicker"]))
     e.append(Spacer(1, 4 * mm))
     e.append(Paragraph(content.get("title", "Add-on Report"), st["cover_title"]))
     e.append(Spacer(1, 8 * mm))

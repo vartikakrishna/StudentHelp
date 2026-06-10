@@ -26,7 +26,7 @@ export const FutureSelf = ({ onStart }) => (
             </p>
             <div className="relative mt-4">
               <p className="text-slate-700 leading-relaxed locked-blur">
-                The turning point was the day you read your Career Blueprint and finally understood exactly where your strengths, the market and AI trends aligned. You stopped chasing
+                The turning point was the day you read your MapMyCareer report and finally understood exactly where your strengths, the market and AI trends aligned. You stopped chasing
                 what looked impressive and started building what actually fit. By year three you had…
               </p>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center"

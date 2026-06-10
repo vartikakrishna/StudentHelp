@@ -34,9 +34,9 @@ export const Footer = ({ onStart }) => (
           <div className="w-8 h-8 rounded-xl grad-primary flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-white" strokeWidth={2.2} />
           </div>
-          <span className="font-head font-700 text-slate-900">Career Blueprint <span className="text-gradient">AI</span></span>
+          <span className="font-head font-700 text-slate-900">MapMy<span className="text-gradient">Career</span></span>
         </div>
-        <p className="text-slate-400 text-sm font-mono">© 2026 Career Blueprint AI · Guidance, not guesswork.</p>
+        <p className="text-slate-400 text-sm font-mono">© 2026 MapMyCareer · Guidance, not guesswork.</p>
       </div>
     </div>
   </footer>

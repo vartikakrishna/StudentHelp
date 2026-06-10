@@ -20,7 +20,7 @@ export const PreviewShowcase = ({ onStart }) => (
       <Reveal>
         <p className="font-mono text-xs tracking-[0.2em] uppercase text-purple-500 mb-4">A Glimpse Inside</p>
         <h2 className="font-head font-700 text-3xl sm:text-4xl lg:text-5xl tracking-tight max-w-3xl text-slate-900">
-          This is what your <span className="text-gradient">Career Blueprint</span> looks like.
+          This is what your <span className="text-gradient">MapMyCareer</span> looks like.
         </h2>
       </Reveal>
 
@@ -63,7 +63,7 @@ export const PreviewShowcase = ({ onStart }) => (
               <div className="w-16 h-16 rounded-2xl grad-primary flex items-center justify-center mx-auto mb-4 glow-primary">
                 <Lock className="w-8 h-8 text-white" strokeWidth={1.8} />
               </div>
-              <p className="font-head font-700 text-2xl sm:text-3xl text-slate-900">90% of Your Career Blueprint Is Locked</p>
+              <p className="font-head font-700 text-2xl sm:text-3xl text-slate-900">90% of Your MapMyCareer Report Is Locked</p>
               <p className="mt-2 text-slate-500">Unlock your full personalized report to see everything.</p>
               <div className="mt-6">
                 <CTAButton testid="preview-unlock-btn" onClick={onStart}>Reveal My Career Matches</CTAButton>

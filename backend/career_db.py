@@ -263,6 +263,84 @@ def _build():
     return careers
 
 
+# ============================================================
+# V2 EXPANSION — extra clusters to take the DB past 300 careers
+# (each cluster carries its own interests/traits so it scores sanely)
+# ============================================================
+_ENG_W = {"technology": 0.7, "problem_solving": 0.8}
+_ENG_T = {"analytical": 0.9, "specialist": 0.6, "independent": 0.4}
+_BIZ_W = {"business": 0.8, "leadership": 0.5, "problem_solving": 0.5}
+_BIZ_T = {"leader": 0.6, "communication": 0.6, "analytical": 0.5}
+_HEALTH_W = {"healthcare": 1.0, "research": 0.4, "psychology": 0.3}
+_HEALTH_T = {"analytical": 0.7, "specialist": 0.6, "communication": 0.5}
+_ART_W = {"design": 0.8, "content_creation": 0.7, "writing": 0.4}
+_ART_T = {"creative": 1.0, "independent": 0.5}
+
+C_EXTRA: List[Dict[str, Any]] = [
+    {"cluster": "Mechanical & Manufacturing", "domain": "Engineering", "icon": "Cog", "market": 70, "ai_risk": 30, "competition": 60, "difficulty": 72, "growth": "Steady", "salary": (4, 12, 32),
+     "degrees": ["B.Tech/BE Mechanical", "Diploma + experience", "M.Tech (specialisation)"], "skills": ["Engineering mechanics", "CAD (SolidWorks/AutoCAD)", "Thermodynamics", "Manufacturing processes", "GD&T", "Automation basics"],
+     "industries": ["Manufacturing", "Automotive", "Core Engineering", "Energy"], "interests": _ENG_W, "traits": _ENG_T,
+     "careers": ["Mechanical Engineer", "Production Engineer", "Industrial Engineer", "Quality Engineer", "Mechatronics Engineer", "Automobile Engineer", "CAD/CAM Engineer", "Maintenance Engineer", "Tool & Die Engineer"]},
+    {"cluster": "Electrical & Electronics", "domain": "Engineering", "icon": "Zap", "market": 74, "ai_risk": 26, "competition": 60, "difficulty": 74, "growth": "Steady", "salary": (4, 13, 35),
+     "degrees": ["B.Tech/BE EEE/ECE", "Diploma + experience", "M.Tech VLSI/Power"], "skills": ["Circuit design", "Embedded systems", "Power systems", "PCB design", "Signal processing", "Microcontrollers"],
+     "industries": ["Electronics", "Power", "Semiconductors", "Telecom"], "interests": _ENG_W, "traits": _ENG_T,
+     "careers": ["Electrical Engineer", "Electronics Engineer", "Embedded Hardware Engineer", "VLSI Design Engineer", "Power Systems Engineer", "Telecom Engineer", "Control Systems Engineer"]},
+    {"cluster": "Civil & Construction", "domain": "Engineering", "icon": "Building", "market": 66, "ai_risk": 24, "competition": 58, "difficulty": 70, "growth": "Steady", "salary": (3, 10, 30),
+     "degrees": ["B.Tech/BE Civil", "Diploma in Civil", "M.Tech Structural/Construction"], "skills": ["Structural analysis", "AutoCAD/STAAD", "Surveying", "Project management", "Estimation", "Building codes"],
+     "industries": ["Construction", "Infrastructure", "Real Estate", "Government"], "interests": _ENG_W, "traits": _ENG_T,
+     "careers": ["Civil Engineer", "Structural Engineer", "Construction Manager", "Quantity Surveyor", "Site Engineer", "Town & Country Planner", "Land Surveyor"]},
+    {"cluster": "Aerospace & Aviation", "domain": "Engineering", "icon": "Plane", "market": 72, "ai_risk": 20, "competition": 78, "difficulty": 82, "growth": "Strong", "salary": (5, 16, 45),
+     "degrees": ["B.Tech Aerospace/Aeronautical", "DGCA licensing (pilot/AME)", "M.Tech Aerospace"], "skills": ["Aerodynamics", "Propulsion", "Avionics", "CAD/CFD", "Safety & regulations", "Systems engineering"],
+     "industries": ["Aviation", "Aerospace", "Defense", "Space"], "interests": _ENG_W, "traits": _ENG_T,
+     "careers": ["Aerospace Engineer", "Aeronautical Engineer", "Air Traffic Controller", "Aircraft Maintenance Engineer", "Drone Pilot / Operator", "Flight Dispatcher", "Avionics Engineer"]},
+    {"cluster": "Energy & Sustainability", "domain": "Engineering", "icon": "Leaf", "market": 84, "ai_risk": 18, "competition": 56, "difficulty": 70, "growth": "Explosive", "salary": (5, 15, 42),
+     "degrees": ["B.Tech (Energy/Mechanical/Electrical)", "M.Tech Renewable Energy", "Environmental Science"], "skills": ["Renewable systems", "Energy auditing", "Sustainability frameworks", "ESG reporting", "Project finance basics", "Data analysis"],
+     "industries": ["Renewables", "Oil & Gas", "Utilities", "Climate Tech"], "interests": {"technology": 0.6, "research": 0.5, "problem_solving": 0.6}, "traits": _ENG_T,
+     "careers": ["Renewable Energy Engineer", "Petroleum Engineer", "Solar Energy Consultant", "Energy Analyst", "Sustainability Manager", "ESG Analyst", "EV Systems Engineer"]},
+    {"cluster": "Agriculture & Food", "domain": "Agriculture", "icon": "Sprout", "market": 64, "ai_risk": 22, "competition": 50, "difficulty": 62, "growth": "Steady", "salary": (3, 9, 26),
+     "degrees": ["B.Sc/B.Tech Agriculture", "B.Tech Food Technology", "Veterinary/Dairy science"], "skills": ["Crop science", "Soil & irrigation", "Food processing", "Agri-tech tools", "Supply chain", "Sustainability"],
+     "industries": ["Agriculture", "Food Processing", "Agri-Tech", "FMCG"], "interests": {"research": 0.6, "problem_solving": 0.5, "business": 0.4}, "traits": {"analytical": 0.6, "specialist": 0.5, "stable": 0.4},
+     "careers": ["Agronomist", "Agricultural Engineer", "Horticulturist", "Food Technologist", "Dairy Technologist", "Fishery Scientist", "Forestry Officer", "Agri-Business Manager"]},
+    {"cluster": "Logistics & Supply Chain", "domain": "Business", "icon": "Truck", "market": 78, "ai_risk": 34, "competition": 56, "difficulty": 58, "growth": "High", "salary": (4, 13, 38),
+     "degrees": ["MBA Operations/SCM", "B.Tech + SCM cert", "Any degree + logistics cert"], "skills": ["Supply chain planning", "Inventory & demand forecasting", "Procurement", "ERP systems", "Analytics", "Negotiation"],
+     "industries": ["E-commerce", "Manufacturing", "Retail", "3PL"], "interests": _BIZ_W, "traits": _BIZ_T,
+     "careers": ["Supply Chain Manager", "Logistics Coordinator", "Procurement Specialist", "Warehouse Operations Manager", "Import-Export Manager", "Demand Planner", "Operations Analyst"]},
+    {"cluster": "Public Health & Allied Care", "domain": "Healthcare", "icon": "HeartPulse", "market": 80, "ai_risk": 18, "competition": 56, "difficulty": 64, "growth": "Strong", "salary": (3, 9, 26),
+     "degrees": ["MPH / B.Sc Allied Health", "BPT / B.Sc Nursing", "Social Work (MSW)"], "skills": ["Patient care", "Public health methods", "Clinical skills", "Empathy & counselling", "Health data", "Community outreach"],
+     "industries": ["Hospitals", "Public Health", "NGOs", "Wellness"], "interests": _HEALTH_W, "traits": _HEALTH_T,
+     "careers": ["Public Health Specialist", "Epidemiologist", "Radiology Technician", "Medical Lab Technician", "Occupational Therapist", "Speech Therapist", "Audiologist", "Medical Social Worker", "Mental Health Counsellor"]},
+    {"cluster": "Medical Specialists", "domain": "Healthcare", "icon": "Stethoscope", "market": 88, "ai_risk": 10, "competition": 90, "difficulty": 94, "growth": "Strong", "salary": (8, 24, 80),
+     "degrees": ["MBBS + MD/MS specialisation", "DM/MCh super-specialisation"], "skills": ["Clinical expertise", "Diagnostics", "Surgical/procedural skill", "Patient communication", "Evidence-based practice", "Continuous learning"],
+     "industries": ["Hospitals", "Specialty Clinics", "Research"], "interests": _HEALTH_W, "traits": {"analytical": 0.8, "specialist": 0.9, "communication": 0.5},
+     "careers": ["Anesthesiologist", "Gynaecologist", "Orthopaedic Surgeon", "Dermatologist", "Neurologist", "Psychiatrist", "Ophthalmologist", "ENT Specialist", "Cardiac Surgeon"]},
+    {"cluster": "Arts & Performing Arts", "domain": "Creative", "icon": "Music", "market": 58, "ai_risk": 28, "competition": 82, "difficulty": 66, "growth": "Volatile", "salary": (2, 9, 45),
+     "degrees": ["Fine Arts / Performing Arts degree", "Specialised training/conservatory", "Self-taught + portfolio"], "skills": ["Craft mastery", "Creativity", "Performance/stage skill", "Self-promotion", "Discipline", "Collaboration"],
+     "industries": ["Entertainment", "Media", "Galleries", "Events"], "interests": _ART_W, "traits": _ART_T,
+     "careers": ["Vocalist / Singer", "Dancer / Choreographer", "Theatre Artist", "Fine Artist / Painter", "Photographer", "Art Director", "Museum Curator"]},
+    {"cluster": "Languages & Communication", "domain": "Media", "icon": "Languages", "market": 64, "ai_risk": 48, "competition": 60, "difficulty": 52, "growth": "Moderate", "salary": (3, 9, 24),
+     "degrees": ["BA/MA Languages or Linguistics", "Translation/Interpretation diploma", "Any degree + language proficiency"], "skills": ["Language proficiency", "Writing & editing", "Cultural fluency", "Localisation tools", "Research", "AI translation tools"],
+     "industries": ["Media", "Publishing", "Localisation", "Diplomacy"], "interests": {"writing": 0.8, "content_creation": 0.5, "research": 0.4}, "traits": {"communication": 0.7, "specialist": 0.4, "analytical": 0.4},
+     "careers": ["Translator", "Interpreter", "Linguist", "Copy Editor / Proofreader", "Content Strategist", "Localisation Specialist"]},
+    {"cluster": "Maritime", "domain": "Engineering", "icon": "Anchor", "market": 66, "ai_risk": 16, "competition": 64, "difficulty": 76, "growth": "Steady", "salary": (6, 18, 50),
+     "degrees": ["B.Tech Marine Engineering", "Naval Architecture", "Merchant Navy (DG Shipping)"], "skills": ["Marine systems", "Navigation", "Safety & regulations", "Mechanical aptitude", "Discipline", "Teamwork"],
+     "industries": ["Shipping", "Ports", "Offshore", "Defense"], "interests": _ENG_W, "traits": {"analytical": 0.7, "specialist": 0.6, "stable": 0.4, "team": 0.5},
+     "careers": ["Marine Engineer", "Naval Architect", "Port & Terminal Manager", "Deck Officer / Ship Captain"]},
+    {"cluster": "Enterprise IT & Delivery", "domain": "Technology", "icon": "Server", "market": 82, "ai_risk": 34, "competition": 62, "difficulty": 62, "growth": "High", "salary": (5, 16, 42),
+     "degrees": ["B.Tech / BCA / MCA", "Any degree + certifications"], "skills": ["Domain platform (SAP/Salesforce)", "SQL & data", "Agile/Scrum", "Stakeholder management", "Business analysis", "Cloud basics"],
+     "industries": ["IT Services", "Enterprise", "SaaS", "Consulting"], "interests": {"technology": 0.7, "business": 0.5, "problem_solving": 0.6}, "traits": {"analytical": 0.7, "communication": 0.6, "team": 0.5},
+     "careers": ["Technical Support Engineer", "IT Project Manager", "Scrum Master", "Business Intelligence Developer", "Salesforce Developer", "SAP / ERP Consultant", "Data Privacy Officer", "Solutions Architect", "Data Architect"]},
+    {"cluster": "Wellness & Lifestyle", "domain": "Healthcare", "icon": "Dumbbell", "market": 70, "ai_risk": 16, "competition": 64, "difficulty": 48, "growth": "Strong", "salary": (2, 8, 30),
+     "degrees": ["Fitness/Nutrition certifications", "Psychology/Wellness background", "Self-built brand"], "skills": ["Domain expertise", "Coaching & motivation", "Communication", "Programme design", "Client management", "Content/marketing"],
+     "industries": ["Wellness", "Fitness", "Coaching", "Hospitality"], "interests": {"psychology": 0.6, "healthcare": 0.5, "content_creation": 0.4}, "traits": {"communication": 0.7, "extrovert": 0.5, "independent": 0.4},
+     "careers": ["Wellness / Life Coach", "Spa & Salon Manager", "Strength & Conditioning Coach", "Nutrition Coach", "Mental Wellness Coach"]},
+    {"cluster": "Business Operations & Support", "domain": "Business", "icon": "Briefcase", "market": 74, "ai_risk": 38, "competition": 60, "difficulty": 52, "growth": "Moderate", "salary": (4, 11, 30),
+     "degrees": ["BBA / MBA", "Any degree + experience"], "skills": ["Operations & process", "Communication", "Stakeholder management", "Tools (Excel/CRM)", "Problem solving", "Customer focus"],
+     "industries": ["Corporates", "Startups", "Services", "BPM"], "interests": _BIZ_W, "traits": _BIZ_T,
+     "careers": ["Customer Success Manager", "Operations Executive", "Administrative Manager", "Executive Assistant", "Management Trainee", "Account Manager"]},
+]
+
+C += C_EXTRA
+
 CAREERS: List[Dict[str, Any]] = _build()
 CAREER_BY_KEY = {c["key"]: c for c in CAREERS}
 _TITLE_INDEX = {c["title"].lower(): c["key"] for c in CAREERS}
