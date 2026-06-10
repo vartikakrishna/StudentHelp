@@ -48,7 +48,7 @@ export const ResultPreview = ({ result, onBack }) => {
         const st = await deepStatus(submission_id);
         if (st?.status === "done") { if (st.report) setReport(st.report); break; }
       }
-    } catch (e) { /* keep base report on failure */ }
+    } catch (e) { toast.error("We couldn't finish your deep blueprint just now — showing your full report. You can refresh to retry."); }
     finally { setGenerating(false); }
   };
 
@@ -100,7 +100,7 @@ const BuildingBlueprint = () => {
         <Icons.Loader2 className="w-8 h-8 text-white animate-spin" strokeWidth={2} />
       </div>
       <h3 className="font-head font-800 text-2xl sm:text-3xl text-slate-900 mb-2">Building your 16–20 page blueprint</h3>
-      <p className="text-slate-500 mb-8 max-w-md mx-auto">Our AI strategist is writing a deeply personalized report just for you. This takes up to a minute — please don't close this page.</p>
+      <p className="text-slate-500 mb-8 max-w-md mx-auto">Our AI strategist is writing a deeply personalized report just for you. This usually takes 1–3 minutes — please don't close this page.</p>
       <div className="max-w-sm mx-auto space-y-3 text-left">
         {BUILD_STEPS.map((s, i) => (
           <div key={i} className="flex items-center gap-3" data-testid={`build-step-${i}`}>

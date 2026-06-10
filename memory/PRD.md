@@ -162,7 +162,38 @@ hybrid curated+AI content, phased Year 1-4 plans, full rename, all 9 categories 
   full Student UI funnel (iteration_9, 100%, 0 JS errors) — branding, 7 new fields, preview, mock-pay
   unlock, all V2 premium sections + recommendation/blueprint cards rendering, PDFs valid for all 9 types.
 
-## 🧭 FUTURE-DIRECTION ENGINE for IT / Professional / Manager (2026-06) — DONE
+## 🧠 DEEP CAREER BLUEPRINT — 16–20 page premium report (2026-06) — DONE
+Major upgrade: the paid report is now a deeply AI-generated "Career Transformation Blueprint" for the
+3 flagship products (Student ₹199, IT Employee ₹499, Working Professional ₹499). Decisions: generate
+AFTER payment (background), AUGMENT existing sections, DROP the Year 1-4 phased blueprint and replace
+with a single detailed step-by-step SYLLABUS to reach the goal, target 16–20 pages.
+- **`deep_report.py`** (new): `generate_deep_sections(profile, report)` runs ~11 SMALL parallel Claude
+  Sonnet 4.6 calls (semaphore=5, 110s timeout each) and assembles ~22 typed sections: Executive Summary,
+  Career DNA, Current/Future Market Position, Deep Dive Best Path, Skill Gap (TABLE), Detailed Syllabus
+  (blueprint), 10 Projects, Tool Stack, Networking + Cold Message Templates, Personal Brand + Content
+  Ideas, Financial Prep, 30-Day (day-by-day) / 90-Day (weekly) / 365-Day (monthly) TIMELINES, Common
+  Failure Points, AI Impact, Success Blueprint. Best-effort: failed chunks are skipped; base report still renders.
+- **Background generation + polling**: `POST /api/generate-deep/{id}` kicks an asyncio background task
+  (returns {status:"generating"}); `GET /api/generate-deep/{id}/status` returns {status:"done", report}
+  when ready (deep_generated flag persisted to db). Avoids HTTP timeouts (generation ~110-115s).
+- **New render types** (web + PDF): `table` (TableBlock) and `timeline` (Timeline). Added to
+  `ReportRenderer.jsx` BLOCKS and `pdf_generator.py` `_section_block`.
+- **Frontend**: `ResultPreview.jsx` shows a `BuildingBlueprint` loader (6 animated steps) post-payment,
+  polls every 4s up to ~3.5min, then renders the enriched report. Deep sections replace base
+  action/learning-plan + Year1-4 blueprint when present.
+- **BUG FIXED (root cause)**: `EMERGENT_LLM_KEY` was read at module-import time, BEFORE `load_dotenv()`
+  in server.py → it was always None, so ai_engine.enhance was a silent no-op AND deep_report produced
+  nothing. Fixed both modules to read the key at call-time (AI narrative now actually runs).
+- Verified: backend assembly unit-test (22 sections), real LLM E2E (31 sections for Professional, valid
+  31-page PDF), and full frontend Student E2E (iteration_12, 100%, 0 console errors): loader → ~110s
+  generation → 29 sections incl table-skill_gap + 3 timelines → PDF 200. PAYMENT_MODE restored to live.
+
+## 💳 LIVE RAZORPAY ENABLED (2026-06) — DONE
+PAYMENT_MODE flipped mock→live in preview .env; live keys (rzp_live_SxDQOWrUTiEaTB) validated against
+Razorpay (real order created). Code (create-order → checkout.js → HMAC verify, main + add-ons) was already
+implemented. NOTE: production deployment needs RAZORPAY_KEY_ID/SECRET + PAYMENT_MODE=live set in prod env + redeploy.
+
+
 Extended the goal engine into the remaining "direction" categories. New shared
 `type_engines._future_direction(goal_text, traits, prefix)` resolves a free-text target role via
 `career_db.goal_block()` and, when it maps to a real career, inserts a `future_direction` matches
