@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import * as Icons from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "./ui/slider";
@@ -10,13 +10,21 @@ import { stepsFor, metaFor, PERSONALITY_BINARY, PERSONALITY_SLIDERS, PERSONALITY
 const inputCls = "w-full rounded-xl bg-white border border-slate-200 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none transition";
 const defaultPers = { mind: "", approach: "", risk: "", work_style: "", structure: "", leadership_interest: 5, communication: 5, stress_tolerance: 5 };
 
-export const Questionnaire = ({ onClose, onComplete }) => {
+export const Questionnaire = ({ onClose, onComplete, prefillDegree = "" }) => {
   const [stepIdx, setStepIdx] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [p, setP] = useState({ name: "", email: "", phone: "", country: "India", user_type: "" });
   const [answers, setAnswers] = useState({});
   const [pers, setPers] = useState(defaultPers);
+
+  // Prefill a degree/text field from the hero lead-magnet input (text fields only).
+  useEffect(() => {
+    if (!prefillDegree || !p.user_type) return;
+    const fields = stepsFor(p.user_type).flatMap((s) => s.fields);
+    const target = fields.find((f) => f.type === "text" && ["current_degree", "degree", "stream", "qualification", "education", "target_role"].includes(f.key));
+    if (target) setAnswers((a) => (a[target.key] ? a : { ...a, [target.key]: prefillDegree }));
+  }, [p.user_type, prefillDegree]);
 
   const catSteps = p.user_type ? stepsFor(p.user_type) : [];
   const steps = ["usertype", ...(p.user_type ? ["value", "about", ...catSteps.map((s) => s.id), "personality"] : [])];

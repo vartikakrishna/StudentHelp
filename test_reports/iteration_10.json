@@ -1,0 +1,46 @@
+{
+  "summary": "E2E validation of the new dark MapMyCareer landing + lead-capture funnel + WhatsApp/Sticky widgets + mock payment flow. Backend /api/lead validated with 6/6 tests; engines_v2 regression 28/28; full mock-pay → PDF unlock confirmed via API. Frontend funnel from hero degree → Student questionnaire → result preview → LeadGate → PaymentModal verified end-to-end on desktop, plus 390px mobile sticky CTA appearance after scroll.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "WhatsAppFab", "issue": "Emergent 'Made with Emergent' badge (a[id=emergent-badge]) overlaps the WhatsApp FAB at the bottom-right and intercepts pointer events. Real users may need to tap precisely on the FAB circle. force=True/JS click works. This is a preview-env badge collision only — won't affect production where the badge is removed.", "selector": "[data-testid=\"whatsapp-fab\"] button[aria-label=\"WhatsApp support\"]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_lead_and_landing.py",
+    "/app/test_reports/pytest/lead_landing.xml",
+    "/app/backend/tests/test_engines_v2.py"
+  ],
+  "action_items": [
+    "(Optional) Consider raising the z-index of [data-testid=\"whatsapp-fab\"] above 50 or shifting it left of the Emergent badge so users in the preview environment can tap it without overlay collision. Not blocking — badge is preview-only.",
+    "After test sign-off, switch PAYMENT_MODE back to live (remove env override) so real Razorpay flow resumes. Currently /api/ returns payment_mode:mock."
+  ],
+  "critical_code_review_comments": [
+    "Landing.jsx is ~340 lines and packs Nav + Hero + Pain + How + ReportTease + Features + SocialProof + Segments + Pricing + Trust + FAQ + Footer in one file. Approaching the 700-line guideline but readable; consider splitting per section file if it grows.",
+    "LeadGate intentionally swallows /api/lead failures (try/empty catch) to avoid blocking checkout — good for UX, but pre-payment leads will be silently dropped if backend is down. Consider a single retry or local-storage queue for resilience.",
+    "analytics.js GTM/GA4/Pixel IDs are blank by default; events still push to window.dataLayer (verified). No code change needed, just confirm IDs are set in prod env."
+  ],
+  "updated_files": ["/app/backend/tests/test_lead_and_landing.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "None — no auth in this app. Payment is MOCK (PAYMENT_MODE=mock).",
+  "seed_data_creation": "Created test leads (TEST_*) and one TEST submission via /api/analyze + mock /verify-payment. No production data touched.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All landing testids verified: landing-dark, hero-degree-input, hero-cta, nav-cta, tease-cta, pricing-cta, faq-item (5 items), whatsapp-fab, whatsapp-card, whatsapp-chat-btn (link https://wa.me/918448773316?...), sticky-mobile-cta + sticky-cta-btn appear at <640px after scrollY>700, lead-gate + lead-name/lead-whatsapp/lead-degree/lead-continue/lead-error all working. /api/lead returns {ok:true, lead_id}. /api/ exposes payment_mode flag. Funnel path: Hero degree → q-usertype-Student → 5 more steps (Class/Stream/Marks selects + Favorite Subjects chips + Career Interests chips + Personality grouped buttons) → result-headline → unlock → lead-gate → PaymentModal with 'Pay ₹199 Securely' button.",
+  "validated_e2e_flows": [
+    "POST /api/lead full payload -> 200 {ok:true,lead_id:uuid}",
+    "POST /api/lead minimal/empty -> 200 ok:true",
+    "POST /api/analyze (Student) -> plan=student price=199",
+    "POST /api/create-order -> mode=mock amount=19900",
+    "POST /api/verify-payment (mock) -> success=true, report populated",
+    "GET /api/report/{id}/pdf -> 200 application/pdf, 17KB",
+    "Landing renders with hero headline, 3 pain stats, 3 how-it-works steps, blurred report tease, 6 feature cards, 3 testimonials w/ 5-star + BadgeCheck, 5 segment cards, pricing ₹499→₹199 + Launch Price urgency, 6 payment badges + 'Powered by Razorpay', 5 FAQ items expand/collapse.",
+    "WhatsApp FAB opens card; chat button window.open URL = https://wa.me/918448773316?text=...",
+    "Mobile sticky CTA at 390px appears after scrollY>700 with text 'Get My Career Blueprint · ₹199'",
+    "Funnel: hero degree=B.Tech CSE prefilled → questionnaire opens → Student type → reaches result-headline 'TEST, your clearest career direction is ready.' with Dream Career Match + Current Readiness scorecards",
+    "LockedSection unlock CTA opens LeadGate modal; empty submit shows lead-error; short WhatsApp number shows lead-error; valid 10-digit submit POSTs /api/lead 200 then closes modal and opens PaymentModal with 'Pay ₹199 Securely'",
+    "No React console errors throughout the run"
+  ]
+}

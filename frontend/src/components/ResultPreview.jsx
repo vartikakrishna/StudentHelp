@@ -8,6 +8,8 @@ import { ReportRenderer } from "./ReportRenderer";
 import { pdfUrl, addonPdfUrl } from "../lib/api";
 import { toast } from "sonner";
 import { PLAN_CONFIG, COMPARISON, UPSELLS, ADDON_LABELS } from "../data/blueprint";
+import { LeadGate } from "./LeadGate";
+import { track } from "../lib/analytics";
 
 const Tick = ({ on }) => on
   ? <Icons.Check className="w-4 h-4 text-emerald-500 mx-auto" strokeWidth={3} />
@@ -20,8 +22,20 @@ export const ResultPreview = ({ result, onBack }) => {
   const [paid, setPaid] = useState(false);
   const [report, setReport] = useState(null);
   const [showPay, setShowPay] = useState(false);
+  const [showLead, setShowLead] = useState(false);
+  const [lead, setLead] = useState({ name: result.name, phone: result.phone });
 
-  const onSuccess = (rep) => { setReport(rep); setPaid(true); setShowPay(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const startUnlock = () => { track("cta_click", { location: "unlock", plan }); setShowLead(true); };
+  const onLeadContinue = (info) => {
+    setLead({ name: info.name || result.name, phone: info.whatsapp || result.phone });
+    setShowLead(false);
+    setShowPay(true);
+  };
+  const onSuccess = (rep) => {
+    setReport(rep); setPaid(true); setShowPay(false);
+    track("purchase", { plan, value: plan === "professional" ? 499 : 199, currency: "INR" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-white grad-mesh" data-testid="result-page">
@@ -37,11 +51,13 @@ export const ResultPreview = ({ result, onBack }) => {
         {!paid && <PreviewScores scores={preview.scores} />}
 
         {paid && report
-          ? <FullReport report={report} submissionId={submission_id} isPro={isPro} name={result.name} email={result.email} phone={result.phone} />
-          : <LockedSection plan={plan} summary={preview.summary} onUnlock={() => setShowPay(true)} />}
+          ? <FullReport report={report} submissionId={submission_id} isPro={isPro} name={lead.name} email={result.email} phone={lead.phone} />
+          : <LockedSection plan={plan} summary={preview.summary} onUnlock={startUnlock} />}
       </div>
 
-      {showPay && <PaymentModal submissionId={submission_id} name={result.name || "You"} email={result.email} phone={result.phone} onClose={() => setShowPay(false)} onSuccess={onSuccess} />}
+      {showLead && <LeadGate defaultName={result.name} defaultDegree={result.answers?.current_degree || result.answers?.stream || ""} userType={result.user_type}
+        onClose={() => setShowLead(false)} onContinue={onLeadContinue} />}
+      {showPay && <PaymentModal submissionId={submission_id} name={lead.name || "You"} email={result.email} phone={lead.phone} onClose={() => setShowPay(false)} onSuccess={onSuccess} />}
     </div>
   );
 };

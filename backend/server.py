@@ -92,6 +92,14 @@ class RegretRequest(BaseModel):
     dream_salary: str = "0"
 
 
+class LeadRequest(BaseModel):
+    name: str = ""
+    whatsapp: str = ""
+    degree: Optional[str] = ""
+    source: Optional[str] = "landing"
+    user_type: Optional[str] = ""
+
+
 # ----------------------- Helpers -----------------------
 def regret_calc(age, current_salary, dream_salary):
     cur = num_or(current_salary)
@@ -118,6 +126,15 @@ async def root():
 @api_router.post("/regret")
 async def regret(req: RegretRequest):
     return regret_calc(req.age, req.current_salary, req.dream_salary)
+
+
+@api_router.post("/lead")
+async def capture_lead(req: LeadRequest):
+    lead = req.model_dump()
+    lead["lead_id"] = str(uuid.uuid4())
+    lead["created_at"] = datetime.now(timezone.utc).isoformat()
+    await db.leads.insert_one({**lead})
+    return {"ok": True, "lead_id": lead["lead_id"]}
 
 
 @api_router.post("/analyze")
