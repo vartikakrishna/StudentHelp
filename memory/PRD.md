@@ -107,8 +107,28 @@ Leadership growth / freelance income / business-growth intelligence reports.
   per-state salary localisation.
 
 ## Next Tasks
-1. ✅ Razorpay LIVE (re-confirmed). Add same keys to PRODUCTION env for the live site.
-2. Optional: email PDF delivery + lead-nurture.
+1. Add the same Razorpay keys to PRODUCTION env + redeploy to push V2 + new landing live.
+2. Paste Meta Pixel / GA4 / GTM IDs when ready (events already wired; just need IDs in env).
+3. Optional: email PDF delivery + lead-nurture (leads now captured in db.leads).
+
+## 🎯 LANDING PAGE CRO REDESIGN — Indian Students (2026-06) — DONE
+Full conversion-optimized **premium DARK landing** rebuilt per design-agent blueprint, mobile-first
+(95% mobile traffic from Reels/Shorts/Meta/WhatsApp). Brand = MapMyCareer; WhatsApp = +918448773316.
+- **New landing** (`components/sections/Landing.jsx`): hero with degree lead-magnet input + "Generate My
+  Free Career Blueprint" CTA + trust microcopy; AI-disruption pain section; how-it-works (3 steps);
+  blurred report-preview tease; 6 feature cards; student testimonials (initials avatars + verified badge +
+  stars, "representative" footnote); 5 college-segment cards; ₹499→₹199 pricing with launch urgency;
+  payment-security badges (UPI/GPay/PhonePe/Paytm/Visa/Mastercard + Razorpay); FAQ accordion; footer.
+- **Functional adds**: floating WhatsApp FAB (`WhatsAppFab.jsx`, z-55, opens wa.me with prefilled msg),
+  mobile sticky CTA (`StickyCta.jsx`, appears after scroll), **3-field lead capture** (`LeadGate.jsx`:
+  Name/WhatsApp/Degree) shown right BEFORE payment → POST **`/api/lead`** (new endpoint, stores to
+  `db.leads`), hero degree prefills the questionnaire.
+- **Analytics** (`lib/analytics.js` + `lib/config.js`): dataLayer + GA4(gtag) + Meta Pixel(fbq) wired;
+  events fire cta_click / begin_questionnaire / generate_report / lead_submit / whatsapp_click / purchase.
+  IDs read from env (REACT_APP_META_PIXEL_ID / GA4_ID / GTM_ID) — blank until provided; events still queue.
+- App.js rewritten to home(Landing)→quiz→result flow; the existing premium V2 report + funnel are reused.
+- Verified: iteration_10 — backend 6/6 lead tests + 28/28 engines regression + full E2E (hero degree →
+  Student quiz → preview → LeadGate → mock-pay → V2 report → PDF) on desktop + 390px mobile, 0 JS errors.
 
 ## 🚀 MAPMYCAREER V2 — Decision & Roadmap Platform (2026-06) — DONE
 Major upgrade from "report generator" → "career decision & roadmap platform". User decisions:

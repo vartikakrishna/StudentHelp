@@ -8,7 +8,7 @@ export const WhatsAppFab = () => {
   const onChat = () => { track("whatsapp_click", { location: "fab" }); window.open(whatsappLink(), "_blank"); };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3" data-testid="whatsapp-fab">
+    <div className="fixed bottom-24 right-5 z-[55] flex flex-col items-end gap-3" data-testid="whatsapp-fab">
       {open && (
         <div className="w-64 rounded-2xl bg-[#0F0F14] border border-white/10 shadow-2xl p-4 animate-in" data-testid="whatsapp-card">
           <div className="flex items-start justify-between">
