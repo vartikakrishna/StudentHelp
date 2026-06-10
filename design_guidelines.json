@@ -1,140 +1,146 @@
 {
-  "project_name": "Career Blueprint AI",
-  "theme_archetype": {
-    "archetype_number": 5,
-    "archetype_name": "Luxury / Premium Cinematic",
-    "theme": "DARK",
-    "rationale": "Matches the 'Netflix-quality' requirement, feeling authoritative, emotional, and premium to justify the ₹199 paywall and alleviate user anxiety with high production value."
+  "theme": "dark",
+  "archetype": "5 (Luxury/Premium Tech) blended with 7 (Electric Accents)",
+  "rationale": "High-conversion student EdTech demands a premium, reliable, yet futuristic feel to combat the anxiety of AI disruption. We respect the existing indigo→purple→cyan 'grad-primary' brand gradient but elevate it by placing it over a deep obsidian/indigo black background. This creates a striking, modern 'SaaS dark mode' that converts highly with Gen-Z users coming from mobile (IG Reels).",
+  "colors": {
+    "background": "bg-[#05050A]",
+    "surface": "bg-[#0F0F14]",
+    "surface_glass": "bg-white/5 backdrop-blur-2xl",
+    "surface_card": "bg-[#0A0A0F]",
+    "border_subtle": "border-white/5",
+    "border_glow": "border-white/10",
+    "primary_gradient": "bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-400",
+    "primary_gradient_text": "bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-300",
+    "text_main": "text-white",
+    "text_muted": "text-slate-400",
+    "accent_cyan": "text-cyan-400",
+    "accent_purple": "text-purple-400",
+    "accent_red": "text-red-400"
   },
   "typography": {
-    "fonts": {
-      "headings": {
-        "family": "Outfit, sans-serif",
-        "weights": ["300", "500", "700", "800"],
-        "description": "Used for all headings. 'Outfit' provides a very geometric, modern, cinematic feel."
-      },
-      "body": {
-        "family": "Plus Jakarta Sans, sans-serif",
-        "weights": ["400", "500", "600"],
-        "description": "Clean, highly readable humanist sans for the questionnaire and dense report data."
-      },
-      "accent": {
-        "family": "Space Mono, monospace",
-        "weights": ["400"],
-        "description": "Used ONLY for score numbers, progress percentages, and overlines (e.g., 'SUCCESS SCORE: 85%')."
-      }
+    "headings": {
+      "family": "Outfit, sans-serif",
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight",
+      "h2": "text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-medium tracking-tight",
+      "h4": "text-lg sm:text-xl font-medium tracking-tight"
     },
-    "scale": {
-      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tighter font-extrabold leading-tight",
-      "h2": "text-3xl sm:text-4xl lg:text-5xl tracking-tight font-bold",
-      "h3": "text-2xl sm:text-3xl tracking-tight font-semibold",
-      "body": "text-base sm:text-lg leading-relaxed",
-      "overline": "text-xs font-bold tracking-[0.2em] uppercase"
-    }
-  },
-  "colors": {
-    "background": {
-      "main": "#040914",
-      "secondary": "#070E1E",
-      "description": "Deep cinematic navy. Avoid pure black to maintain richness."
-    },
-    "surface": {
-      "glass": "bg-white/5 backdrop-blur-xl",
-      "card": "bg-[#091226]",
-      "description": "Use 'Crystal' glassmorphism for floating navs and locked content overlays. Solid dark navy for questionnaire cards."
-    },
-    "accent": {
-      "primary": "#F59E0B",
-      "secondary": "#E5C07B",
-      "glow": "rgba(245, 158, 11, 0.15)",
-      "description": "Gold/Amber to signify premium quality, unlocking, and success. Used for CTAs, progress bars, and lock icons."
-    },
-    "text": {
-      "primary": "#FFFFFF",
-      "secondary": "#94A3B8",
-      "muted": "#64748B"
-    },
-    "border": {
-      "subtle": "rgba(255, 255, 255, 0.08)",
-      "active": "rgba(245, 158, 11, 0.4)"
+    "body": {
+      "family": "Plus Jakarta Sans, sans-serif",
+      "base": "text-base sm:text-lg leading-relaxed text-slate-300",
+      "small": "text-sm text-slate-400",
+      "micro": "text-xs tracking-[0.2em] uppercase text-slate-500"
     }
   },
   "spacing_and_layout": {
-    "generous_spacing": true,
-    "section_padding": "py-24 sm:py-32",
-    "container": "max-w-7xl mx-auto px-6 lg:px-8",
-    "grid_modes": {
-      "features": "grid-cols-1 md:grid-cols-12 gap-6 (Bento layout for 'What's Inside')",
-      "questionnaire": "max-w-2xl mx-auto (Focused, centralized column)"
-    },
-    "image_constraints": "max-h-[80vh] md:max-h-none object-cover"
-  },
-  "components": {
-    "hero": {
-      "style": "Cinematic depth. Dark navy/gold abstract texture background with a heavy radial gradient overlay to fade edges into #040914.",
-      "layout": "Centered alignment for emotional impact. H1 -> Subheadline -> Primary CTA Button.",
-      "overlay": "bg-gradient-to-b from-transparent via-[#040914]/80 to-[#040914]"
-    },
-    "cta_button": {
-      "style": "bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white font-bold rounded-none shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] transition-all px-8 py-4 text-lg",
-      "shape": "Slightly rounded corners (rounded-md) to maintain premium feel, avoiding overly pill-shaped generic SaaS look."
-    },
-    "questionnaire_card": {
-      "style": "Flat solid background (#091226) with 1px border-white/10. No heavy glassmorphism here to keep focus on the inputs.",
-      "inputs": "Use Shadcn Slider for 1-10 scales, Select/Cards for choices."
-    },
-    "lock_overlay": {
-      "container": "relative overflow-hidden",
-      "overlay_style": "absolute inset-0 z-20 backdrop-blur-2xl bg-[#040914]/70 flex flex-col items-center justify-center p-6 border-t border-white/10",
-      "icon": "Lucide Lock icon, text-amber-500, w-12 h-12 mb-4 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]"
-    },
-    "bento_grid": {
-      "style": "Use for 'What's Inside Premium Report'. Glass cards with border-white/5. Spans: 1 large hero card (col-span-full md:col-span-8), 2 smaller feature cards."
-    },
-    "icons": {
-      "library": "lucide-react",
-      "style": "Stroke width 1.5. Colors: white for general, amber-500 for success/premium indicators."
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "section_padding": "py-20 md:py-32",
+    "mobile_first_rules": "Stack elements on mobile. Use max-w-full. Ensure touch targets are at least 48px tall.",
+    "radius": {
+      "card": "rounded-2xl sm:rounded-3xl",
+      "button": "rounded-full"
     }
+  },
+  "surfaces_and_micro_themes": {
+    "glass_panel": "bg-white/[0.03] backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+    "tracing_beam_card": "relative overflow-hidden bg-[#0A0A0F] border border-white/5 group hover:border-purple-500/30 transition-colors duration-500",
+    "report_blur_overlay": "absolute inset-0 bg-[#05050A]/60 backdrop-blur-md flex flex-col items-center justify-center z-10"
+  },
+  "sections": [
+    {
+      "name": "0. Header / Navigation",
+      "instructions": "Floating Crystal Glass sticky header. z-50. bg-white/[0.02] backdrop-blur-xl border-b border-white/5. Must contain Logo (MapMyCareer) and primary CTA 'Get Blueprint'. Mobile must have hamburger or simply hide non-essential links to keep CTA visible.",
+      "components": ["Logo", "NavLinks", "CTA"]
+    },
+    {
+      "name": "1. Hero Section",
+      "instructions": "First 3s impact. Center aligned. H1: 'Most Students Will Spend 4 Years Preparing For A Career That AI May Change.' Highlight 'AI May Change' using primary_gradient_text. Below H1: Subheadline. Then, the lead magnet: An inline form with a select/input for 'Enter Your Degree' attached directly to the 'Generate My Free Career Blueprint ->' CTA button. Trust microcopy below the input with checkmarks. Background: Deep obsidian with subtle purple/cyan ambient glows (blur-[120px]).",
+      "components": ["H1", "Subhead", "LeadMagnetInput", "TrustBadges"]
+    },
+    {
+      "name": "2. Problem / Pain Section",
+      "instructions": "Highlight the mismatch between college syllabi and AI speed. Use 'Control Room' grid (dense, sharp). Left side: bold statement 'The Job Market Is Changing Faster Than College Syllabi'. Right side: 2-3 stat cards with subtle red/orange accents indicating 'Risk' or 'Outdated Curriculum'.",
+      "components": ["BentoStats", "WarningCards"]
+    },
+    {
+      "name": "3. Report Preview (The Tease)",
+      "instructions": "A premium dashboard mockup built with UI code (not an image). Show partial elements: AI Automation Risk Score, Salary Potential, Skill Gap. Apply a heavy glassmorphic blur overlay covering the bottom half. Overlay text: 'Unlock Full Personalized Results' with a CTA button.",
+      "components": ["DashboardMockup", "BlurOverlay", "UnlockCTA"]
+    },
+    {
+      "name": "4. What You Get (Features)",
+      "instructions": "6 premium feature cards in a Bento Grid format (md:grid-cols-2 lg:grid-cols-3). Use 'tracing_beam_card' style. Features: AI Automation Risk, Salary Growth, Career Match, Skill Gap, Learning Roadmap, Future Trends. Icons must be lucide-react with cyan or purple accents.",
+      "components": ["FeatureCard", "Grid"]
+    },
+    {
+      "name": "5. Social Proof",
+      "instructions": "Avoid stock photos. Use colored circles with initials (e.g., 'A', 'S') for Indian student avatars. Include name, degree/stream, city, and 5-star rating (lucide-react Star). Add a small green 'Verified Student' check badge.",
+      "components": ["TestimonialCard", "InitialsAvatar", "RatingStars"]
+    },
+    {
+      "name": "6. College-Specific Segments",
+      "instructions": "Horizontal scroll or flex-wrap row of tags/small cards for B.Tech, BCA, B.Com, MBA Aspirants, Fresh Graduates. Active state uses the primary gradient border. When clicked (or just as static cards), shows relevant benefits.",
+      "components": ["SegmentPill", "SegmentDetails"]
+    },
+    {
+      "name": "7. Pricing & Urgency",
+      "instructions": "Strikethrough regular price (₹499). Highlight Student Launch Price (₹199). Use a bold, high-contrast card. Include ethical urgency banner: 'Launch Price Available For A Limited Time'. CTA: 'Get My Career Blueprint Now ->'. List inclusions with green checkmarks.",
+      "components": ["PricingCard", "UrgencyBanner", "StrikethroughText"]
+    },
+    {
+      "name": "8. Trust & Payment Security",
+      "instructions": "Below pricing. Text: '100% Secure Payments Powered By Razorpay', 'Zero Hidden Charges'. Use simple pill badges for payment methods: UPI, GPay, Paytm, Visa, Mastercard (use text or simple SVG shapes/react-icons).",
+      "components": ["SecurityBadges", "RazorpayText"]
+    },
+    {
+      "name": "9. FAQ",
+      "instructions": "Accordion style (use shadcn/ui or simple details/summary). Clean borders, text-white for question, text-slate-400 for answers.",
+      "components": ["Accordion"]
+    },
+    {
+      "name": "10. Lead Capture Funnel Form",
+      "instructions": "Triggered by CTAs or sticky mobile bar. Max 3 fields: Name, WhatsApp Number, Degree/Major. Minimal friction. High contrast active states on inputs. Submit feeds into the existing questionnaire funnel.",
+      "components": ["MinimalForm", "Input", "SubmitCTA"]
+    },
+    {
+      "name": "11. Floating WhatsApp Button",
+      "instructions": "Persistent bottom-right button. Green glow. 'Need Help? Chat With Us' tooltip. Z-index 50. Use lucide-react MessageCircle or standard WhatsApp green.",
+      "components": ["FloatingButton"]
+    }
+  ],
+  "components_specification": {
+    "PrimaryCTA": {
+      "classes": "inline-flex items-center justify-center w-full sm:w-auto h-14 px-8 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-400 text-white font-bold text-lg hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all transform hover:-translate-y-1 active:translate-y-0",
+      "testing_attribute": "data-testid='primary-cta'"
+    },
+    "SecondaryCTA": {
+      "classes": "inline-flex items-center justify-center h-12 px-6 rounded-full bg-white/10 text-white font-semibold hover:bg-white/20 transition-colors border border-white/20"
+    },
+    "Input": {
+      "classes": "h-14 w-full bg-black/40 border border-white/10 text-white rounded-full px-6 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-slate-500"
+    },
+    "Select": {
+      "classes": "h-14 w-full bg-black/40 border border-white/10 text-white rounded-full px-6 focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none"
+    }
+  },
+  "media_and_icons": {
+    "icons_library": "lucide-react (mandatory for core UI). install react-icons if required for payment logos.",
+    "images": "No stock photos. Use UI code for mockups and CSS for avatars. Hero should rely on typography, layout, and deep ambient gradient glows."
   },
   "motion_and_interactions": {
-    "scrolling": "IMPLEMENT lenis for premium smooth scroll momentum.",
-    "reveal": "Use framer-motion. Staggered fade-up (initial opacity 0, y 20) for all text and cards on scroll.",
-    "hover_states": "Cards: -translate-y-1, border-white/20, duration-300. Buttons: scale-105.",
-    "micro_interactions": "Progress bar in the questionnaire must animate smoothly (width transition)."
+    "hover_states": "All cards should have subtle hover:-translate-y-1 and border color shift. Buttons must have shadow glows.",
+    "animations": "Use Framer Motion for entrance animations. Staggered fade-up for features and testimonials."
   },
-  "image_urls": {
-    "hero_background": {
-      "url": "https://images.unsplash.com/photo-1556139930-c23fa4a4f934?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGRhcmslMjBuYXZ5JTIwZ29sZCUyMGNpbmVtYXRpYyUyMHRleHR1cmV8ZW58MHx8fHwxNzgwOTA1OTE1fDA&ixlib=rb-4.1.0&q=85",
-      "description": "Abstract black/brown/gold painting. Use as a deeply darkened, low-opacity background for the hero section to give cinematic texture.",
-      "usage": "Hero section background (wrapped in heavy vignette)"
-    },
-    "transformation_student": {
-      "url": "https://images.unsplash.com/photo-1760004941335-6feccb7f800a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxNzV8MHwxfHNlYXJjaHwzfHxjb25maWRlbnQlMjBzdHVkZW50JTIwcG9ydHJhaXQlMjBkYXJrJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3ODA5MDU5MTZ8MA&ixlib=rb-4.1.0&q=85",
-      "description": "Man with glasses looking forward in the dark. Cinematic and confident.",
-      "usage": "Use in the 'Transformation / Before-After' section to represent clarity and confidence."
-    }
+  "testing_attributes": {
+    "instructions": "MANDATORY: Add data-testid attributes to all interactive elements. E.g., data-testid='hero-degree-input', data-testid='checkout-button', data-testid='whatsapp-fab'."
   },
   "instructions_to_main_agent": [
-    "1. FRAMEWORK: Use React, Tailwind CSS, Framer Motion, and pure HTML structure for layout freedom.",
-    "2. THEME: The site is exclusively DARK MODE. Set backgrounds to #040914 (deep navy).",
-    "3. HERO SECTION: Implement a cinematic, emotional hero. Use the provided hero_background image with a heavy CSS overlay (`bg-[#040914]/80`) so it barely peeks through.",
-    "4. QUESTIONNAIRE: Build a multi-step interactive form. Use Shadcn for Slider, Select, RadioGroups. Include a dynamic progress bar at the top.",
-    "5. PREVIEW SECTION: Show top 3 mocked career matches. Below that, physically render a 'mock' premium report but overlay it with a `backdrop-blur-2xl` div containing the lock icon and 'Unlock Full Blueprint for ₹199' CTA.",
-    "6. SPACING: Use generous margins (`py-24`). Avoid tight crammed boxes.",
-    "7. COMPONENTS: Avoid Shadcn Card wrappers for marketing sections; use raw `div` elements with Tailwind classes for bento grids.",
-    "8. PAYMENT: Integrate a mocked Razorpay checkout modal that triggers on the ₹199 CTA.",
-    "9. TEST IDS: Add `data-testid` attributes to all buttons, form inputs, and major sections.",
-    "10. FONTS: Import 'Outfit' (weights 300,500,700,800), 'Plus Jakarta Sans' (400,500,600), and 'Space Mono' (400) from Google Fonts."
-  ],
-  "accessibility_and_testing": {
-    "contrast": "Ensure white text over dark navy meets APCA contrast guidelines. CTA text must be legible against amber.",
-    "focus_states": "focus:ring-2 focus:ring-amber-500/50 focus:outline-none",
-    "test_ids_required": [
-      "start-analysis-btn",
-      "questionnaire-step-1",
-      "questionnaire-next-btn",
-      "unlock-premium-btn",
-      "razorpay-mock-modal"
-    ]
-  }
+    "You are building a high-conversion landing page. 95% traffic is mobile. Ensure mobile stack is perfect (padding, thumb-friendly buttons).",
+    "Use raw HTML/Tailwind for complex overlapping marketing layouts rather than Shadcn cards which are too rigid.",
+    "Use Framer Motion to animate the hero text and entrance of the bento grid cards.",
+    "Implement the 'Report Preview' section purely with HTML/CSS. Build a fake UI dashboard with stats and place an absolute positioned blur overlay on top of it.",
+    "For avatars, use a simple rounded div with a background color and the student's initials inside, do NOT use placeholder images.",
+    "Ensure 'grad-primary' brand identity is felt throughout the page via glowing accents, text gradients, and CTA backgrounds.",
+    "Add a sticky mobile CTA at the bottom of the screen (on mobile only) once the user scrolls past the hero."
+  ]
 }
