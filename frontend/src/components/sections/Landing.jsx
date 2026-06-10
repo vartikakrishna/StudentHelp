@@ -1,107 +1,94 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import * as Icons from "lucide-react";
 import {
   ArrowRight, Check, ShieldCheck, Bot, TrendingUp, Target, Wrench, Map, LineChart,
-  Star, BadgeCheck, Lock, Zap, AlertTriangle, Sparkles, ChevronDown,
+  Star, BadgeCheck, Lock, Zap, ChevronDown, GraduationCap, FileText,
 } from "lucide-react";
 import { PRICE, whatsappLink } from "../../lib/config";
 import { track } from "../../lib/analytics";
+import { HeroDashboard } from "./HeroDashboard";
 
-const fade = { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-60px" } };
-const Glow = ({ className }) => <div className={`pointer-events-none absolute rounded-full blur-[120px] opacity-30 ${className}`} />;
+const fade = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-60px" }, transition: { duration: 0.5 } };
+const container = "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8";
+const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
 const PrimaryBtn = ({ children, onClick, testid, className = "" }) => (
   <button onClick={onClick} data-testid={testid}
-    className={`inline-flex items-center justify-center gap-2 h-14 px-8 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-400 text-white font-bold text-base sm:text-lg hover:shadow-[0_0_34px_rgba(168,85,247,0.5)] transition-all hover:-translate-y-0.5 active:translate-y-0 ${className}`}>
+    className={`inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#2563EB] text-white font-semibold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${className}`}>
     {children}
   </button>
 );
-
-const SectionLabel = ({ children }) => (
-  <p className="font-mono text-xs tracking-[0.25em] uppercase text-purple-400 mb-3">{children}</p>
+const SecondaryBtn = ({ children, onClick, testid, className = "" }) => (
+  <button onClick={onClick} data-testid={testid}
+    className={`inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-white text-[#0F172A] border border-[#E2E8F0] font-semibold hover:bg-[#F8FAFC] transition-all ${className}`}>
+    {children}
+  </button>
 );
+const Eyebrow = ({ children }) => <p className="text-sm font-semibold tracking-wide uppercase text-[#2563EB] mb-3">{children}</p>;
+const H2 = ({ children }) => <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0F172A]">{children}</h2>;
 
 // ---------------- NAV ----------------
 const Nav = ({ onStart }) => (
-  <header className="fixed top-0 inset-x-0 z-40 bg-[#05050A]/70 backdrop-blur-xl border-b border-white/5">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <span className="font-head font-800 text-lg text-white tracking-tight">MapMy<span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-300">Career</span></span>
-      <nav className="hidden md:flex items-center gap-8 text-sm text-slate-300">
-        <a href="#how" className="hover:text-white transition">How it works</a>
-        <a href="#features" className="hover:text-white transition">Features</a>
-        <a href="#pricing" className="hover:text-white transition">Pricing</a>
-        <a href="#faq" className="hover:text-white transition">FAQ</a>
+  <header className="fixed top-0 inset-x-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#E2E8F0]">
+    <div className={`${container} h-16 flex items-center justify-between`}>
+      <span className="font-head font-800 text-lg text-[#0F172A] tracking-tight flex items-center gap-2">
+        <span className="w-7 h-7 rounded-lg bg-[#2563EB] flex items-center justify-center"><GraduationCap className="w-4 h-4 text-white" /></span>
+        MapMy<span className="text-[#2563EB]">Career</span>
+      </span>
+      <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[#334155]">
+        <button onClick={() => scrollTo("features")} className="hover:text-[#2563EB] transition">Features</button>
+        <button onClick={() => scrollTo("preview")} className="hover:text-[#2563EB] transition">Sample Report</button>
+        <button onClick={() => scrollTo("pricing")} className="hover:text-[#2563EB] transition">Pricing</button>
+        <button onClick={() => scrollTo("faq")} className="hover:text-[#2563EB] transition">FAQ</button>
       </nav>
-      <button onClick={() => onStart()} data-testid="nav-cta"
-        className="h-10 px-5 rounded-full bg-white/10 border border-white/15 text-white text-sm font-semibold hover:bg-white/20 transition">Get Blueprint</button>
+      <PrimaryBtn onClick={() => onStart()} testid="nav-cta" className="h-10 px-5 text-sm">Get Started</PrimaryBtn>
     </div>
   </header>
 );
 
 // ---------------- HERO ----------------
-const DEGREES = ["B.Tech CSE", "B.Tech ECE", "BCA", "MCA", "B.Com", "BBA", "MBA", "B.Sc", "B.A"];
-const Hero = ({ onStart }) => {
-  const [degree, setDegree] = useState("");
-  const go = () => { track("cta_click", { location: "hero", degree }); onStart(degree); };
-  return (
-    <section className="relative overflow-hidden pt-32 pb-20 md:pt-40 md:pb-28">
-      <Glow className="bg-purple-600 w-[420px] h-[420px] -top-20 -left-20" />
-      <Glow className="bg-cyan-500 w-[380px] h-[380px] top-10 right-0" />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center relative">
-        <motion.div {...fade} className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-xs text-slate-300 mb-6">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-300" /> AI-powered career intelligence for Indian students
-        </motion.div>
-        <motion.h1 {...fade} transition={{ delay: 0.05 }} className="font-head font-800 text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.08] text-white">
-          Most Students Will Spend 4 Years Preparing For A Career That{" "}
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-300">AI May Change.</span>
-        </motion.h1>
-        <motion.p {...fade} transition={{ delay: 0.12 }} className="text-slate-300 text-base sm:text-lg mt-6 max-w-2xl mx-auto leading-relaxed">
-          MapMyCareer analyzes your degree, skills, interests and future job trends to generate a personalized AI career roadmap, salary outlook, skill-gap analysis and automation-risk report.
-        </motion.p>
-
-        <motion.div {...fade} transition={{ delay: 0.2 }} className="mt-9 max-w-xl mx-auto">
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch">
-            <input list="degree-list" value={degree} onChange={(e) => setDegree(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && go()} data-testid="hero-degree-input"
-              placeholder="Enter your degree / major (e.g. B.Tech CSE)"
-              className="h-14 flex-1 bg-black/40 border border-white/10 text-white rounded-full px-6 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-slate-500" />
-            <datalist id="degree-list">{DEGREES.map((d) => <option key={d} value={d} />)}</datalist>
-            <PrimaryBtn onClick={go} testid="hero-cta" className="shrink-0">Generate My Free Career Blueprint <ArrowRight className="w-5 h-5" /></PrimaryBtn>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-5 text-xs text-slate-400">
-            {["Used by students across India", "Instant report generation", "Mobile-friendly", "No hidden charges"].map((t) => (
-              <span key={t} className="inline-flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-400" /> {t}</span>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-};
-
-// ---------------- PAIN ----------------
-const STATS = [
-  { icon: AlertTriangle, tone: "text-rose-400", v: "Years behind", l: "College syllabi often lag real industry skills by years." },
-  { icon: Bot, tone: "text-amber-400", v: "AI disruption", l: "Routine entry-level tasks are the first to be automated." },
-  { icon: Target, tone: "text-orange-400", v: "Late clarity", l: "Most students discover a career mismatch only after graduating." },
-];
-const Pain = () => (
-  <section className="py-20 md:py-28 relative">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-2 gap-10 items-center">
+const Hero = ({ onStart }) => (
+  <section className="pt-28 pb-16 md:pt-36 md:pb-24 bg-white">
+    <div className={`${container} grid lg:grid-cols-2 gap-12 lg:gap-16 items-center`}>
       <motion.div {...fade}>
-        <SectionLabel>The hard truth</SectionLabel>
-        <h2 className="font-head font-700 text-3xl sm:text-4xl tracking-tight text-white leading-tight">The Job Market Is Changing Faster Than College Syllabi.</h2>
-        <p className="text-slate-400 mt-5 leading-relaxed">AI is reshaping entire industries while curricula stay frozen. Too many students graduate with outdated skills and realize the mismatch only when it's expensive to fix. The earlier you see it, the easier it is to win.</p>
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#2563EB]/8 border border-[#2563EB]/15 px-3.5 py-1.5 text-xs font-semibold text-[#2563EB] mb-6">
+          <Bot className="w-3.5 h-3.5" /> AI-powered career intelligence for students
+        </div>
+        <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] leading-[1.08] font-extrabold tracking-tight text-[#0F172A]">
+          Most Students Will Spend 4 Years Preparing For Careers That <span className="text-[#2563EB]">AI May Change.</span>
+        </h1>
+        <p className="text-base sm:text-lg text-[#334155] mt-6 leading-relaxed max-w-xl">
+          MapMyCareer analyzes your education, skills, strengths and industry trends to create a personalized, future-ready career roadmap — with salary outlook, skill-gaps and an AI-risk assessment.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 mt-8">
+          <PrimaryBtn onClick={() => { track("cta_click", { location: "hero" }); onStart(); }} testid="hero-cta">Generate My Free Career Blueprint <ArrowRight className="w-5 h-5" /></PrimaryBtn>
+          <SecondaryBtn onClick={() => scrollTo("preview")} testid="hero-sample">View Sample Report</SecondaryBtn>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-7 text-sm text-[#64748B]">
+          {["Instant report", "Trusted by students across India", "Secure payments"].map((t) => (
+            <span key={t} className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-[#10B981]" /> {t}</span>
+          ))}
+        </div>
       </motion.div>
-      <div className="grid gap-4">
-        {STATS.map((s, i) => (
-          <motion.div key={i} {...fade} transition={{ delay: i * 0.08 }}
-            className="rounded-2xl bg-[#0A0A0F] border border-white/5 p-5 flex items-start gap-4 hover:border-rose-500/30 transition">
-            <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center shrink-0"><s.icon className={`w-5 h-5 ${s.tone}`} /></div>
-            <div><p className="font-head font-700 text-white">{s.v}</p><p className="text-slate-400 text-sm mt-0.5">{s.l}</p></div>
-          </motion.div>
-        ))}
+      <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>
+        <HeroDashboard />
+      </motion.div>
+    </div>
+  </section>
+);
+
+// ---------------- TRUST BAND ----------------
+const TRUST = ["AI-Powered Analysis", "Future Career Insights", "Personalized Roadmap", "Secure Payments"];
+const PAYMENTS = ["UPI", "PhonePe", "Google Pay", "Paytm", "Visa", "Mastercard"];
+const TrustBand = () => (
+  <section className="border-y border-[#E2E8F0] bg-white py-8">
+    <div className={`${container}`}>
+      <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 mb-6">
+        {TRUST.map((t) => <span key={t} className="inline-flex items-center gap-2 text-sm font-medium text-[#334155]"><Check className="w-4 h-4 text-[#10B981]" /> {t}</span>)}
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-2.5">
+        {PAYMENTS.map((p) => <span key={p} className="rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] px-3.5 py-1.5 text-[#475569] text-xs font-semibold">{p}</span>)}
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#10B981]/8 border border-[#10B981]/20 px-3.5 py-1.5 text-[#059669] text-xs font-semibold"><ShieldCheck className="w-4 h-4" /> Secured by Razorpay</span>
       </div>
     </div>
   </section>
@@ -109,20 +96,20 @@ const Pain = () => (
 
 // ---------------- HOW IT WORKS ----------------
 const STEPS = [
-  { n: "01", t: "Answer a few quick questions", d: "Your degree, skills, interests and goals — takes ~3 minutes." },
-  { n: "02", t: "Our AI analyzes you vs the market", d: "Against 300+ careers, salary data, AI-risk and future demand." },
-  { n: "03", t: "Get your personalized blueprint", d: "Career match, skill-gaps, salary forecast and a year-by-year roadmap." },
+  { n: "1", t: "Answer a few questions", d: "Your degree, skills, interests and goals — about 3 minutes." },
+  { n: "2", t: "AI analyzes you vs the market", d: "Across 300+ careers, salary data, AI-risk and future demand." },
+  { n: "3", t: "Get your career blueprint", d: "Career match, skill-gaps, salary forecast and a year-by-year roadmap." },
 ];
 const How = () => (
-  <section id="how" className="py-20 md:py-28">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6">
-      <motion.div {...fade} className="text-center mb-12"><SectionLabel>How it works</SectionLabel><h2 className="font-head font-700 text-3xl sm:text-4xl text-white">Clarity in 3 simple steps</h2></motion.div>
-      <div className="grid md:grid-cols-3 gap-5">
+  <section className="py-16 md:py-24 bg-[#F8FAFC]">
+    <div className={container}>
+      <div className="text-center mb-12"><Eyebrow>How it works</Eyebrow><H2>Career clarity in 3 simple steps</H2></div>
+      <div className="grid md:grid-cols-3 gap-6">
         {STEPS.map((s, i) => (
-          <motion.div key={i} {...fade} transition={{ delay: i * 0.08 }} className="rounded-2xl bg-[#0A0A0F] border border-white/5 p-7 hover:border-purple-500/30 transition">
-            <p className="font-mono text-purple-400 text-sm mb-3">{s.n}</p>
-            <p className="font-head font-700 text-white text-lg mb-1.5">{s.t}</p>
-            <p className="text-slate-400 text-sm leading-relaxed">{s.d}</p>
+          <motion.div key={i} {...fade} transition={{ delay: i * 0.08, duration: 0.5 }} className="rounded-2xl bg-white border border-[#E2E8F0] p-8 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)]">
+            <div className="w-10 h-10 rounded-xl bg-[#2563EB] text-white flex items-center justify-center font-bold mb-4">{s.n}</div>
+            <p className="font-bold text-[#0F172A] text-lg mb-1.5">{s.t}</p>
+            <p className="text-[#64748B] text-sm leading-relaxed">{s.d}</p>
           </motion.div>
         ))}
       </div>
@@ -130,30 +117,57 @@ const How = () => (
   </section>
 );
 
-// ---------------- REPORT TEASE ----------------
+// ---------------- FEATURES ----------------
+const FEATURES = [
+  { icon: Bot, t: "AI Automation Risk Score", d: "Know how vulnerable your path is to AI disruption before you commit years to it." },
+  { icon: TrendingUp, t: "Salary Growth Forecast", d: "Projected earning potential over the next 5–10 years on your chosen path." },
+  { icon: Target, t: "Career Match Analysis", d: "Careers aligned with your strengths, interests and the real job market." },
+  { icon: Wrench, t: "Skill Gap Assessment", d: "The exact skills employers expect — and which ones you're missing." },
+  { icon: Map, t: "Learning Roadmap", d: "What to learn next and in what order, mapped year by year." },
+  { icon: LineChart, t: "Industry Outlook", d: "See where your industry is heading before everyone else does." },
+];
+const Features = () => (
+  <section id="features" className="py-16 md:py-24 bg-white">
+    <div className={container}>
+      <div className="text-center mb-12"><Eyebrow>What you get</Eyebrow><H2>Everything in your career blueprint</H2></div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {FEATURES.map((f, i) => (
+          <motion.div key={i} {...fade} transition={{ delay: (i % 3) * 0.07, duration: 0.5 }}
+            className="rounded-2xl bg-white border border-[#E2E8F0] p-8 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.1)] hover:-translate-y-1 transition-all">
+            <div className="w-12 h-12 rounded-xl bg-[#2563EB]/8 flex items-center justify-center mb-4"><f.icon className="w-6 h-6 text-[#2563EB]" /></div>
+            <p className="font-bold text-[#0F172A] text-lg mb-1.5">{f.t}</p>
+            <p className="text-[#64748B] text-sm leading-relaxed">{f.d}</p>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+// ---------------- REPORT PREVIEW ----------------
 const ReportTease = ({ onStart }) => (
-  <section className="py-20 md:py-28">
-    <div className="max-w-5xl mx-auto px-4 sm:px-6">
-      <motion.div {...fade} className="text-center mb-10"><SectionLabel>Your report preview</SectionLabel><h2 className="font-head font-700 text-3xl sm:text-4xl text-white">A premium, personalized career blueprint</h2></motion.div>
-      <motion.div {...fade} className="relative rounded-3xl bg-[#0A0A0F] border border-white/10 overflow-hidden">
+  <section id="preview" className="py-16 md:py-24 bg-[#F8FAFC]">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <div className="text-center mb-10"><Eyebrow>Sample report</Eyebrow><H2>A premium, personalized career blueprint</H2></div>
+      <motion.div {...fade} className="relative rounded-2xl bg-white border border-[#E2E8F0] overflow-hidden shadow-[0_20px_60px_-24px_rgba(15,23,42,0.18)]">
         <div className="p-6 sm:p-8 grid sm:grid-cols-3 gap-4">
-          {[{ l: "AI Automation Risk", v: "Low", c: "text-emerald-400" }, { l: "Career Fit Score", v: "86%", c: "text-cyan-300" }, { l: "Salary Potential", v: "₹18 LPA", c: "text-purple-300" }].map((m, i) => (
-            <div key={i} className="rounded-2xl bg-white/[0.03] border border-white/10 p-5 text-center">
-              <p className={`font-head font-800 text-3xl ${m.c}`}>{m.v}</p><p className="text-slate-400 text-xs mt-1">{m.l}</p>
+          {[{ l: "AI Automation Risk", v: "Low", c: "text-[#10B981]" }, { l: "Career Fit Score", v: "86%", c: "text-[#2563EB]" }, { l: "Salary Potential", v: "₹18 LPA", c: "text-[#0F172A]" }].map((m, i) => (
+            <div key={i} className="rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] p-5 text-center">
+              <p className={`font-extrabold text-3xl ${m.c}`}>{m.v}</p><p className="text-[#64748B] text-xs mt-1">{m.l}</p>
             </div>
           ))}
         </div>
         <div className="px-6 sm:px-8 pb-8 space-y-3">
           {["Skill Gap Analysis", "Future Job Outlook", "Recommended Career Paths", "Year 1-4 Learning Blueprint"].map((r) => (
-            <div key={r} className="flex items-center justify-between rounded-xl bg-white/[0.02] border border-white/5 px-4 py-3">
-              <span className="text-slate-300 text-sm">{r}</span>
-              <div className="w-28 h-2 rounded-full bg-white/10 overflow-hidden"><div className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400" style={{ width: "72%" }} /></div>
+            <div key={r} className="flex items-center justify-between rounded-xl bg-white border border-[#E2E8F0] px-4 py-3">
+              <span className="text-[#334155] text-sm font-medium">{r}</span>
+              <div className="w-28 h-2 rounded-full bg-[#E2E8F0] overflow-hidden"><div className="h-full bg-[#2563EB]" style={{ width: "72%" }} /></div>
             </div>
           ))}
         </div>
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#05050A] via-[#05050A]/85 to-transparent backdrop-blur-[3px] flex flex-col items-center justify-end pb-8">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-400 flex items-center justify-center mb-3"><Lock className="w-7 h-7 text-white" /></div>
-          <p className="font-head font-700 text-white text-xl mb-4">Unlock Full Personalized Results</p>
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-white via-white/92 to-transparent backdrop-blur-[2px] flex flex-col items-center justify-end pb-8">
+          <div className="w-12 h-12 rounded-xl bg-[#2563EB] flex items-center justify-center mb-3"><Lock className="w-6 h-6 text-white" /></div>
+          <p className="font-bold text-[#0F172A] text-xl mb-4">Unlock Full Personalized Report</p>
           <PrimaryBtn onClick={() => onStart()} testid="tease-cta">Generate My Free Preview <ArrowRight className="w-5 h-5" /></PrimaryBtn>
         </div>
       </motion.div>
@@ -161,26 +175,25 @@ const ReportTease = ({ onStart }) => (
   </section>
 );
 
-// ---------------- FEATURES ----------------
-const FEATURES = [
-  { icon: Bot, t: "AI Automation Risk Score", d: "Know how vulnerable your path is to AI disruption — before you commit years to it." },
-  { icon: TrendingUp, t: "Salary Growth Forecast", d: "Projected earning potential over the next 5–10 years on your path." },
-  { icon: Target, t: "Career Match Analysis", d: "Careers aligned with your strengths, interests and the real market." },
-  { icon: Wrench, t: "Skill Gap Report", d: "The exact skills employers expect — and which ones you're missing." },
-  { icon: Map, t: "Personalized Learning Roadmap", d: "What to learn next and in what order, year by year." },
-  { icon: LineChart, t: "Future Industry Trends", d: "See where your industry is heading before everyone else does." },
+// ---------------- SEGMENTS ----------------
+const SEGMENTS = [
+  { t: "B.Tech", d: "Pinpoint the specialisation (AI, cloud, core) that keeps you employable and pays best." },
+  { t: "BCA", d: "Bridge the gap to real dev roles — exact stack, projects and certifications." },
+  { t: "B.Com", d: "Finance, analytics, CA/CFA or business — find your highest-ROI direction." },
+  { t: "MBA", d: "Specialisation + role fit, salary trajectory and the skills that get you hired." },
+  { t: "MCA", d: "Move from coursework to industry-ready engineering with a clear roadmap." },
+  { t: "Fresh Graduates", d: "Stop guessing. Get a 90-day plan to land your first real offer." },
 ];
-const Features = () => (
-  <section id="features" className="py-20 md:py-28">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6">
-      <motion.div {...fade} className="text-center mb-12"><SectionLabel>What you get</SectionLabel><h2 className="font-head font-700 text-3xl sm:text-4xl text-white">Everything in your blueprint</h2></motion.div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {FEATURES.map((f, i) => (
-          <motion.div key={i} {...fade} transition={{ delay: (i % 3) * 0.07 }}
-            className="rounded-2xl bg-[#0A0A0F] border border-white/5 p-6 hover:border-purple-500/30 hover:-translate-y-1 transition-all">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-cyan-400/20 border border-white/10 flex items-center justify-center mb-4"><f.icon className="w-6 h-6 text-cyan-300" /></div>
-            <p className="font-head font-700 text-white text-lg mb-1.5">{f.t}</p>
-            <p className="text-slate-400 text-sm leading-relaxed">{f.d}</p>
+const Segments = () => (
+  <section className="py-16 md:py-24 bg-white">
+    <div className={container}>
+      <div className="text-center mb-12"><Eyebrow>Built for your path</Eyebrow><H2>Tailored to your degree</H2></div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {SEGMENTS.map((s, i) => (
+          <motion.div key={i} {...fade} transition={{ delay: (i % 3) * 0.07, duration: 0.5 }}
+            className="rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] p-6 hover:border-[#2563EB]/30 transition">
+            <div className="inline-flex items-center gap-2 rounded-lg bg-white border border-[#E2E8F0] px-3 py-1 text-sm font-bold text-[#2563EB] mb-3"><GraduationCap className="w-4 h-4" /> {s.t}</div>
+            <p className="text-[#475569] text-sm leading-relaxed">{s.d}</p>
           </motion.div>
         ))}
       </div>
@@ -190,52 +203,26 @@ const Features = () => (
 
 // ---------------- SOCIAL PROOF ----------------
 const TESTIMONIALS = [
-  { n: "Rahul S.", c: "#6366F1", s: "Final-Year BCA · Pune", q: "MapMyCareer helped me realize which skills companies actually want. I completely changed my learning roadmap." },
-  { n: "Sneha M.", c: "#A855F7", s: "B.Tech ECE · Chennai", q: "The report showed exactly where I was falling behind and what to focus on next." },
-  { n: "Arjun K.", c: "#06B6D4", s: "B.Com · Bangalore", q: "I finally have clarity on which career path actually fits me — and a real plan." },
+  { n: "Rahul Sharma", s: "Final-Year BCA · Pune", img: "https://images.unsplash.com/photo-1667655861998-46fe4c29a4cf?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDZ8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBzdHVkZW50JTIwcG9ydHJhaXR8ZW58MHx8fHwxNzgxMTA3NTcwfDA&ixlib=rb-4.1.0&q=85", q: "MapMyCareer showed me exactly which skills companies want. I completely changed my learning roadmap." },
+  { n: "Sneha Menon", s: "B.Tech ECE · Chennai", img: "https://images.unsplash.com/photo-1604177091072-b7b677a077f6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDZ8MHwxfHNlYXJjaHwzfHxpbmRpYW4lMjBzdHVkZW50JTIwcG9ydHJhaXR8ZW58MHx8fHwxNzgxMTA3NTcwfDA&ixlib=rb-4.1.0&q=85", q: "The report pinpointed where I was falling behind and what to focus on next. Genuinely useful." },
+  { n: "Arjun Kumar", s: "B.Com · Bangalore", img: "https://images.pexels.com/photos/15237309/pexels-photo-15237309.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", q: "I finally have clarity on which career path fits me — and a concrete plan to get there." },
 ];
 const SocialProof = () => (
-  <section className="py-20 md:py-28">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6">
-      <motion.div {...fade} className="text-center mb-12"><SectionLabel>Loved by students</SectionLabel><h2 className="font-head font-700 text-3xl sm:text-4xl text-white">What students are saying</h2></motion.div>
-      <div className="grid md:grid-cols-3 gap-5">
+  <section className="py-16 md:py-24 bg-[#F8FAFC]">
+    <div className={container}>
+      <div className="text-center mb-12"><Eyebrow>Loved by students</Eyebrow><H2>What students are saying</H2></div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {TESTIMONIALS.map((t, i) => (
-          <motion.div key={i} {...fade} transition={{ delay: i * 0.08 }} className="rounded-2xl bg-[#0A0A0F] border border-white/5 p-6">
+          <motion.div key={i} {...fade} transition={{ delay: i * 0.08, duration: 0.5 }} className="rounded-2xl bg-white border border-[#E2E8F0] p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)]">
             <div className="flex items-center gap-0.5 mb-3">{[...Array(5)].map((_, j) => <Star key={j} className="w-4 h-4 text-amber-400 fill-amber-400" />)}</div>
-            <p className="text-slate-200 text-sm leading-relaxed mb-5">"{t.q}"</p>
+            <p className="text-[#334155] text-sm leading-relaxed mb-5">"{t.q}"</p>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style={{ background: t.c }}>{t.n[0]}</div>
+              <img src={t.img} alt={t.n} loading="lazy" className="w-11 h-11 rounded-full object-cover border border-[#E2E8F0]" />
               <div>
-                <p className="text-white text-sm font-600 flex items-center gap-1">{t.n} <BadgeCheck className="w-4 h-4 text-emerald-400" /></p>
-                <p className="text-slate-500 text-xs">{t.s}</p>
+                <p className="text-[#0F172A] text-sm font-bold flex items-center gap-1">{t.n} <BadgeCheck className="w-4 h-4 text-[#10B981]" /></p>
+                <p className="text-[#64748B] text-xs">{t.s}</p>
               </div>
             </div>
-          </motion.div>
-        ))}
-      </div>
-      <p className="text-center text-slate-600 text-xs mt-6">*Representative student feedback.</p>
-    </div>
-  </section>
-);
-
-// ---------------- SEGMENTS ----------------
-const SEGMENTS = [
-  { t: "B.Tech Students", d: "Pinpoint which specialisation (AI, cloud, core) keeps you employable and pays best." },
-  { t: "BCA / MCA Students", d: "Bridge the gap to real dev roles — exact stack, projects and certifications." },
-  { t: "B.Com Students", d: "Finance, analytics, CA/CFA or business — find your highest-ROI direction." },
-  { t: "MBA Aspirants", d: "Specialisation + role fit, salary trajectory and the skills that get you hired." },
-  { t: "Fresh Graduates", d: "Stop guessing. Get a 90-day plan to land your first real offer." },
-];
-const Segments = () => (
-  <section className="py-20 md:py-28">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6">
-      <motion.div {...fade} className="text-center mb-12"><SectionLabel>Built for your path</SectionLabel><h2 className="font-head font-700 text-3xl sm:text-4xl text-white">Tailored to your degree</h2></motion.div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {SEGMENTS.map((s, i) => (
-          <motion.div key={i} {...fade} transition={{ delay: (i % 3) * 0.07 }}
-            className="rounded-2xl bg-gradient-to-br from-white/[0.04] to-transparent border border-white/10 p-6 hover:border-cyan-400/30 transition">
-            <p className="font-head font-700 text-white text-lg mb-1.5">{s.t}</p>
-            <p className="text-slate-400 text-sm leading-relaxed">{s.d}</p>
           </motion.div>
         ))}
       </div>
@@ -244,98 +231,97 @@ const Segments = () => (
 );
 
 // ---------------- PRICING ----------------
-const INCLUDES = ["One personalized career report", "Career match + roadmap", "Skill-gap analysis", "Salary forecast", "AI risk assessment", "Instant PDF delivery"];
+const INCLUDES = ["Personalized Career Roadmap", "Salary Forecast", "AI Risk Analysis", "Future Skills Report", "Skill-gap analysis", "Instant PDF delivery"];
 const Pricing = ({ onStart }) => (
-  <section id="pricing" className="py-20 md:py-28 relative">
-    <Glow className="bg-purple-600 w-[400px] h-[400px] left-1/2 -translate-x-1/2 top-0" />
-    <div className="max-w-md mx-auto px-4 sm:px-6 relative">
-      <motion.div {...fade} className="rounded-3xl bg-[#0A0A0F] border border-purple-500/30 p-8 text-center shadow-[0_0_40px_rgba(124,58,237,0.18)]">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 border border-amber-400/30 px-3 py-1 text-amber-300 text-xs mb-5"><Zap className="w-3.5 h-3.5" /> Launch Price · Limited Time</div>
-        <p className="font-head font-700 text-white text-xl mb-2">Student Launch Offer</p>
+  <section id="pricing" className="py-16 md:py-24 bg-white">
+    <div className="max-w-lg mx-auto px-4 sm:px-6">
+      <div className="text-center mb-10"><Eyebrow>Pricing</Eyebrow><H2>One report. Total clarity.</H2></div>
+      <motion.div {...fade} className="rounded-2xl bg-white border-2 border-[#2563EB]/20 p-8 text-center shadow-[0_20px_60px_-24px_rgba(37,99,235,0.25)]">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-[#10B981]/10 border border-[#10B981]/20 px-3 py-1 text-[#059669] text-xs font-semibold mb-5"><Zap className="w-3.5 h-3.5" /> Student Launch Offer · Limited Time</div>
         <div className="flex items-end justify-center gap-2 mb-1">
-          <span className="text-slate-500 line-through text-2xl">₹{PRICE.original}</span>
-          <span className="font-head font-800 text-5xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-300">₹{PRICE.student}</span>
+          <span className="text-[#94A3B8] line-through text-2xl">₹{PRICE.original}</span>
+          <span className="font-extrabold text-5xl text-[#0F172A]">₹{PRICE.student}</span>
         </div>
-        <p className="text-emerald-400 text-sm mb-6">You save ₹{PRICE.original - PRICE.student} ({Math.round((1 - PRICE.student / PRICE.original) * 100)}% off)</p>
+        <p className="text-[#059669] text-sm font-semibold mb-6">You save ₹{PRICE.original - PRICE.student} ({Math.round((1 - PRICE.student / PRICE.original) * 100)}% off)</p>
         <ul className="text-left space-y-2.5 mb-7">
-          {INCLUDES.map((f) => <li key={f} className="flex items-center gap-2.5 text-slate-300 text-sm"><Check className="w-4 h-4 text-emerald-400 shrink-0" /> {f}</li>)}
+          {INCLUDES.map((f) => <li key={f} className="flex items-center gap-2.5 text-[#334155] text-sm"><Check className="w-4 h-4 text-[#10B981] shrink-0" /> {f}</li>)}
         </ul>
-        <PrimaryBtn onClick={() => { track("cta_click", { location: "pricing" }); onStart(); }} testid="pricing-cta" className="w-full">Get My Career Blueprint Now <ArrowRight className="w-5 h-5" /></PrimaryBtn>
-        <p className="text-slate-500 text-xs mt-4 flex items-center justify-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-400" /> 100% Secure · Powered by Razorpay · Zero hidden charges</p>
+        <PrimaryBtn onClick={() => { track("cta_click", { location: "pricing" }); onStart(); }} testid="pricing-cta" className="w-full">Get My Career Blueprint <ArrowRight className="w-5 h-5" /></PrimaryBtn>
+        <p className="text-[#64748B] text-xs mt-4 flex items-center justify-center gap-1.5"><ShieldCheck className="w-4 h-4 text-[#10B981]" /> 100% Secure · Powered by Razorpay · Zero hidden charges</p>
       </motion.div>
-    </div>
-  </section>
-);
-
-// ---------------- TRUST BADGES ----------------
-const PAYMENTS = ["UPI", "Google Pay", "PhonePe", "Paytm", "Visa", "Mastercard"];
-const Trust = () => (
-  <section className="py-12">
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-      <p className="text-slate-400 text-sm mb-5 flex items-center justify-center gap-2"><ShieldCheck className="w-4 h-4 text-emerald-400" /> 100% Secure Payments · Instant Report Delivery · Zero Hidden Charges</p>
-      <div className="flex flex-wrap items-center justify-center gap-2.5">
-        {PAYMENTS.map((p) => <span key={p} className="rounded-lg bg-white/5 border border-white/10 px-3.5 py-1.5 text-slate-300 text-xs font-medium">{p}</span>)}
-      </div>
     </div>
   </section>
 );
 
 // ---------------- FAQ ----------------
 const FAQS = [
-  { q: "Is this report personalized?", a: "Yes. Every report is generated from your specific degree, skills, interests and goals — matched against 300+ careers, salary data and AI-risk. No two reports are the same." },
-  { q: "How accurate is MapMyCareer?", a: "We combine an AI engine with curated, up-to-date industry data. It's a brutally honest strategic guide — not a guarantee — designed to give you clarity and a concrete plan." },
-  { q: "Will I receive my report instantly?", a: "Yes. Your full report unlocks immediately after payment and is available as a downloadable PDF on the spot." },
-  { q: "Can this help me choose a career?", a: "That's exactly what it's for — career match, the honest reality of your dream career, related backups, skill-gaps, salary outlook and a year-by-year roadmap." },
-  { q: "Is my data secure?", a: "Yes. Payments are processed securely via Razorpay and we only use your inputs to generate your report." },
+  { q: "How accurate is the report?", a: "We combine an AI engine with curated, up-to-date industry data and a 300+ career database. It's an honest strategic guide designed to give you real clarity and a concrete plan — not a guarantee." },
+  { q: "Is my data private and secure?", a: "Yes. We only use your inputs to generate your report, and payments are processed securely through Razorpay." },
+  { q: "Will I receive my report instantly?", a: "Yes — your full report unlocks immediately after payment and is available as a downloadable PDF on the spot." },
+  { q: "Can this really help me choose a career?", a: "That's exactly what it's built for: career match, an honest reality-check on your dream career, related backups, skill-gaps, salary outlook and a year-by-year roadmap." },
+  { q: "How do payments work?", a: "Secure UPI / cards / wallets via Razorpay. ₹199 launch price, no hidden charges, instant delivery." },
 ];
 const FaqItem = ({ q, a }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-white/10">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between py-5 text-left" data-testid="faq-item">
-        <span className="text-white font-600 text-sm sm:text-base pr-4">{q}</span>
-        <ChevronDown className={`w-5 h-5 text-purple-400 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+    <div className="rounded-xl border border-[#E2E8F0] bg-white mb-3 overflow-hidden">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-5 py-4 text-left" data-testid="faq-item">
+        <span className="text-[#0F172A] font-semibold text-sm sm:text-base pr-4">{q}</span>
+        <ChevronDown className={`w-5 h-5 text-[#2563EB] shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <p className="text-slate-400 text-sm pb-5 leading-relaxed">{a}</p>}
+      {open && <p className="text-[#64748B] text-sm px-5 pb-4 leading-relaxed">{a}</p>}
     </div>
   );
 };
 const FAQ = () => (
-  <section id="faq" className="py-20 md:py-28">
-    <div className="max-w-2xl mx-auto px-4 sm:px-6">
-      <motion.div {...fade} className="text-center mb-10"><SectionLabel>Questions</SectionLabel><h2 className="font-head font-700 text-3xl sm:text-4xl text-white">Frequently asked</h2></motion.div>
-      <div>{FAQS.map((f) => <FaqItem key={f.q} {...f} />)}</div>
+  <section id="faq" className="py-16 md:py-24 bg-[#F8FAFC]">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6">
+      <div className="text-center mb-10"><Eyebrow>Questions</Eyebrow><H2>Frequently asked</H2></div>
+      {FAQS.map((f) => <FaqItem key={f.q} {...f} />)}
     </div>
   </section>
 );
 
-// ---------------- FOOTER ----------------
+// ---------------- CTA + FOOTER ----------------
+const FinalCta = ({ onStart }) => (
+  <section className="py-16 md:py-20 bg-[#0F172A]">
+    <div className={`${container} text-center`}>
+      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">Build a career AI can't replace.</h2>
+      <p className="text-slate-300 mt-3 max-w-xl mx-auto">Get your personalized, future-ready career blueprint in minutes.</p>
+      <div className="mt-7 flex justify-center">
+        <button onClick={() => onStart()} data-testid="final-cta" className="inline-flex items-center gap-2 h-12 px-7 rounded-xl bg-white text-[#0F172A] font-semibold hover:bg-slate-100 transition-all hover:-translate-y-0.5">
+          Generate My Free Career Blueprint <ArrowRight className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  </section>
+);
 const Footer = () => (
-  <footer className="border-t border-white/5 py-12">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
-      <p className="font-head font-800 text-lg text-white mb-2">MapMy<span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-300">Career</span></p>
-      <p className="text-slate-500 text-sm max-w-md mx-auto mb-4">AI-powered career clarity for Indian students. Guidance, not guesswork.</p>
-      <button onClick={() => window.open(whatsappLink(), "_blank")} className="text-emerald-400 text-sm hover:underline mb-4">Need help? Chat with us on WhatsApp</button>
-      <p className="text-slate-600 text-xs">© 2026 MapMyCareer · Secure payments by Razorpay</p>
+  <footer className="bg-[#0F172A] border-t border-white/10 py-10">
+    <div className={`${container} text-center`}>
+      <p className="font-head font-800 text-lg text-white mb-2">MapMy<span className="text-[#60A5FA]">Career</span></p>
+      <p className="text-slate-400 text-sm max-w-md mx-auto mb-4">AI-powered career clarity for students. Guidance, not guesswork.</p>
+      <button onClick={() => window.open(whatsappLink(), "_blank")} className="text-[#34D399] text-sm hover:underline mb-4">Need help? Chat with us on WhatsApp</button>
+      <p className="text-slate-500 text-xs">© 2026 MapMyCareer · Secured by Razorpay</p>
     </div>
   </footer>
 );
 
 // ---------------- PAGE ----------------
 export const Landing = ({ onStart }) => (
-  <div className="bg-[#05050A] text-white min-h-screen overflow-x-hidden" data-testid="landing-dark">
+  <div className="bg-white text-[#0F172A] min-h-screen overflow-x-hidden" data-testid="landing">
     <Nav onStart={onStart} />
     <main>
       <Hero onStart={onStart} />
-      <Pain />
+      <TrustBand />
       <How />
-      <ReportTease onStart={onStart} />
       <Features />
-      <SocialProof />
+      <ReportTease onStart={onStart} />
       <Segments />
+      <SocialProof />
       <Pricing onStart={onStart} />
-      <Trust />
       <FAQ />
+      <FinalCta onStart={onStart} />
     </main>
     <Footer />
   </div>

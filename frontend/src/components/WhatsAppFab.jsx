@@ -10,14 +10,14 @@ export const WhatsAppFab = () => {
   return (
     <div className="fixed bottom-24 right-5 z-[55] flex flex-col items-end gap-3" data-testid="whatsapp-fab">
       {open && (
-        <div className="w-64 rounded-2xl bg-[#0F0F14] border border-white/10 shadow-2xl p-4 animate-in" data-testid="whatsapp-card">
+        <div className="w-64 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xl p-4 animate-in" data-testid="whatsapp-card">
           <div className="flex items-start justify-between">
-            <p className="font-head font-700 text-white text-sm">Need help? 💬</p>
-            <button onClick={() => setOpen(false)} aria-label="close"><X className="w-4 h-4 text-slate-400" /></button>
+            <p className="font-head font-700 text-[#0F172A] text-sm">Need help? 💬</p>
+            <button onClick={() => setOpen(false)} aria-label="close"><X className="w-4 h-4 text-[#94A3B8]" /></button>
           </div>
-          <p className="text-slate-400 text-xs mt-1 mb-3">Questions about your report, payment or access? Chat with us on WhatsApp.</p>
+          <p className="text-[#64748B] text-xs mt-1 mb-3">Questions about your report, payment or access? Chat with us on WhatsApp.</p>
           <button onClick={onChat} data-testid="whatsapp-chat-btn"
-            className="w-full rounded-full bg-[#25D366] text-white font-semibold text-sm py-2.5 hover:brightness-110 transition">
+            className="w-full rounded-xl bg-[#25D366] text-white font-semibold text-sm py-2.5 hover:brightness-110 transition">
             Chat With Us
           </button>
         </div>
