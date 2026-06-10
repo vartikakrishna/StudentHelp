@@ -107,9 +107,40 @@ Leadership growth / freelance income / business-growth intelligence reports.
   per-state salary localisation.
 
 ## Next Tasks
-1. ✅ Razorpay LIVE keys added (2026-06) → `payment_mode: live`, real order creation verified
-   (order_Sz9MmMOnodWX93, ₹199). Add the same keys to the PRODUCTION deployment env to go live there too.
-2. Optional: email delivery + lead-nurture sequence.
+1. ✅ Razorpay LIVE (re-confirmed). Add same keys to PRODUCTION env for the live site.
+2. Optional: email PDF delivery + lead-nurture.
+
+## 🚀 MAPMYCAREER V2 — Decision & Roadmap Platform (2026-06) — DONE
+Major upgrade from "report generator" → "career decision & roadmap platform". User decisions:
+hybrid curated+AI content, phased Year 1-4 plans, full rename, all 9 categories kept, pricing unchanged
+(Student ₹199 / IT ₹499 / Working Professional ₹499).
+- **Rename**: Career Blueprint AI → **MapMyCareer** everywhere (navbar, footer, tab title, PaymentModal,
+  Razorpay checkout name, PDF cover, AI prompt, API root). Zero old-brand strings remain.
+- **Career DB**: expanded `career_db.py` 210 → **317 careers** across 45 clusters (added Mechanical,
+  Electrical, Civil, Aerospace/Aviation, Energy, Agriculture, Logistics, Public Health, Medical
+  Specialists, Arts, Languages, Maritime, Enterprise-IT, Wellness, Business Ops). Resolver hardened
+  (Solutions Architect → Cloud Architect aliases).
+- **New curated content modules**: `content_lib.py` (per-cluster/domain learning libraries — skills,
+  tools, courses, books, YouTube, projects, certifications, universities) + `system_design.py`
+  (fixed L1→L4 System Design syllabus). AI personalises narrative on top (hybrid).
+- **New section types** (web + PDF): `recommendations` (Top-N cards with match %, why, pros/cons,
+  growth/AI-risk/salary badges) and `blueprint` (phased plan cards with labelled resource groups).
+  Added to `ReportRenderer.jsx` (Recommendations/Blueprint components) and `pdf_generator.py`.
+- **Student V2**: reality_check, Dream Career Reality Check (scores), Honest Verdict (dream pinned +
+  challenges + improvements + backups), Top 5 Recommendations (pros/cons), Degree/Course/Cert/University
+  cards, Year 1-4 Learning Blueprint, Financial Projection (+wealth range), Mistakes, 30-Day + 90-Day plans.
+- **IT V2**: Career Health Score, AI Replacement Risk (level/why/how), Skill Gap Analysis
+  (current/missing/future), MANDATORY System Design Roadmap L1→L4, Future Career Tracks (recommendations),
+  Salary Projection, Promotion Readiness, Learning Plan (30/90/6mo/1yr).
+- **Working Professional V2**: Promotion/Leadership/Income scorecards, Industry Outlook, Future Career
+  Options (recommendations), Skill Gap Analysis, Financial Projection, Leadership Analysis, 90-Day + 1-Year plans.
+- **Questionnaire fields added**: Student (Financial Expectations, Desired Lifestyle, Technology Interest,
+  Creativity Level + relabelled Study Discipline); IT (Team Size, Leadership Experience, Career Goal/Desired
+  Role, Desired Salary); Fresher target_role (prior).
+- **New config**: optional `PAYMENT_MODE` env override (staging/testing); default live when keys present.
+- Verified: **38/38 backend tests** (`tests/test_engines_v2.py` 28 unit + a generated HTTP E2E 10) +
+  full Student UI funnel (iteration_9, 100%, 0 JS errors) — branding, 7 new fields, preview, mock-pay
+  unlock, all V2 premium sections + recommendation/blueprint cards rendering, PDFs valid for all 9 types.
 
 ## 🧭 FUTURE-DIRECTION ENGINE for IT / Professional / Manager (2026-06) — DONE
 Extended the goal engine into the remaining "direction" categories. New shared
