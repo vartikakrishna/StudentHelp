@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import io
 import uuid
+import asyncio
 import hmac
 import hashlib
 import logging
@@ -16,6 +17,7 @@ from datetime import datetime, timezone
 
 from type_engines import analyze_profile
 from ai_engine import enhance
+from deep_report import generate_deep_sections, DEEP_TYPES
 from pdf_generator import build_pdf, build_addon_pdf
 from addons import ADDON_CATALOG, expand_addons, addon_total, build_addon_content, normalize_ids
 
@@ -203,6 +205,62 @@ async def verify_payment(req: VerifyRequest):
                                               "paid_at": datetime.now(timezone.utc).isoformat()}})
     updated = await db.submissions.find_one({"id": req.submission_id}, {"_id": 0})
     return {"success": True, "payment_id": payment_id, "report": updated["report"], "name": updated["name"]}
+
+
+_deep_inflight: set = set()
+
+
+async def _run_deep_generation(submission_id: str):
+    try:
+        sub = await db.submissions.find_one({"id": submission_id}, {"_id": 0})
+        if not sub or sub.get("report", {}).get("deep_generated"):
+            return
+        report = sub["report"]
+        profile = {"name": sub["name"], "email": sub["email"], "phone": sub.get("phone"),
+                   "user_type": sub["user_type"], "answers": sub.get("answers", {}),
+                   "personality": sub.get("personality", {})}
+        deep, replaced = await generate_deep_sections(profile, report)
+        if deep:
+            base = report.get("sections", [])
+            letter = [s for s in base if s.get("id") == "letter"]
+            keep = [s for s in base if s.get("id") != "letter" and s.get("id") not in replaced]
+            report["sections"] = keep + deep + letter
+        report["deep_generated"] = True
+        await db.submissions.update_one({"id": submission_id}, {"$set": {"report": report}})
+        logger.info("Deep report generated: %s (%s deep sections)", submission_id, len(deep))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Deep generation error %s: %s", submission_id, repr(exc))
+        await db.submissions.update_one({"id": submission_id}, {"$set": {"report.deep_generated": True}})
+    finally:
+        _deep_inflight.discard(submission_id)
+
+
+@api_router.post("/generate-deep/{submission_id}")
+async def generate_deep(submission_id: str):
+    """Kick off (or report status of) the deep 16-20 page blueprint generation. Non-blocking."""
+    sub = await db.submissions.find_one({"id": submission_id}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    if not sub.get("paid"):
+        raise HTTPException(status_code=402, detail="Payment required")
+    report = sub["report"]
+    if report.get("deep_generated") or sub.get("user_type") not in DEEP_TYPES:
+        return {"status": "done", "report": report, "name": sub["name"]}
+    if submission_id not in _deep_inflight:
+        _deep_inflight.add(submission_id)
+        asyncio.create_task(_run_deep_generation(submission_id))
+    return {"status": "generating"}
+
+
+@api_router.get("/generate-deep/{submission_id}/status")
+async def generate_deep_status(submission_id: str):
+    sub = await db.submissions.find_one({"id": submission_id}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    report = sub.get("report", {})
+    if report.get("deep_generated") or sub.get("user_type") not in DEEP_TYPES:
+        return {"status": "done", "report": report, "name": sub["name"]}
+    return {"status": "generating"}
 
 
 @api_router.get("/report/{submission_id}")

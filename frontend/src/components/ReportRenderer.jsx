@@ -225,7 +225,43 @@ const Blueprint = ({ s }) => (
   </div>
 );
 
-const BLOCKS = { intro: Intro, callout: Callout, scorecards: ScoreCards, bars: Bars, matches: Matches, list: ListBlock, tags: Tags, cards: Cards, roadmap: Roadmap, salary_chart: SalaryChart, letter: Letter, recommendations: Recommendations, blueprint: Blueprint };
+const TableBlock = ({ s }) => (
+  <div className="rounded-3xl glass-card p-6 overflow-x-auto" data-testid={`table-${s.id}`}>
+    {s.intro && <p className="text-slate-600 mb-4">{s.intro}</p>}
+    <table className="w-full text-sm border-collapse">
+      <thead>
+        <tr>{(s.headers || []).map((h, i) => <th key={i} className="text-left font-700 text-slate-900 pb-2 pr-4 border-b-2 border-slate-200">{h}</th>)}</tr>
+      </thead>
+      <tbody>
+        {(s.rows || []).map((row, i) => (
+          <tr key={i} className="border-b border-slate-100 last:border-0">
+            {row.map((c, j) => <td key={j} className={`py-2.5 pr-4 align-top ${j === 0 ? "font-600 text-slate-900" : "text-slate-600"}`}>{c}</td>)}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
+const Timeline = ({ s }) => (
+  <div className="rounded-3xl glass-card p-6" data-testid={`timeline-${s.id}`}>
+    {s.intro && <p className="text-slate-600 mb-4">{s.intro}</p>}
+    <div className="space-y-3">
+      {s.items.map((it, i) => (
+        <div key={i} className="flex gap-3 sm:gap-4">
+          <span className="font-mono text-xs text-purple-600 font-700 whitespace-nowrap min-w-[64px] sm:min-w-[80px] pt-0.5">{it.label}</span>
+          <div className="border-l-2 border-purple-100 pl-3 sm:pl-4 pb-1 flex-1">
+            {it.title && <p className="font-600 text-slate-900 text-sm">{it.title}</p>}
+            {it.text && <p className="text-slate-600 text-sm">{it.text}</p>}
+            {it.points && <ul className="mt-1 space-y-1">{it.points.map((p, j) => <li key={j} className="text-slate-600 text-sm flex gap-2"><Icons.Check className="w-3.5 h-3.5 text-cyan-500 shrink-0 mt-0.5" />{p}</li>)}</ul>}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const BLOCKS = { intro: Intro, callout: Callout, scorecards: ScoreCards, bars: Bars, matches: Matches, list: ListBlock, tags: Tags, cards: Cards, roadmap: Roadmap, salary_chart: SalaryChart, letter: Letter, recommendations: Recommendations, blueprint: Blueprint, table: TableBlock, timeline: Timeline };
 
 export const ReportRenderer = ({ sections = [] }) => (
   <div data-testid="report-renderer">

@@ -5,7 +5,7 @@ import { Lock, Download, ArrowLeft } from "lucide-react";
 import { PaymentModal } from "./PaymentModal";
 import { CTAButton } from "./CTAButton";
 import { ReportRenderer } from "./ReportRenderer";
-import { pdfUrl, addonPdfUrl } from "../lib/api";
+import { pdfUrl, addonPdfUrl, generateDeep, deepStatus } from "../lib/api";
 import { toast } from "sonner";
 import { PLAN_CONFIG, COMPARISON, UPSELLS, ADDON_LABELS } from "../data/blueprint";
 import { LeadGate } from "./LeadGate";
@@ -21,9 +21,11 @@ export const ResultPreview = ({ result, onBack }) => {
   const isPro = plan === "professional";
   const [paid, setPaid] = useState(false);
   const [report, setReport] = useState(null);
+  const [generating, setGenerating] = useState(false);
   const [showPay, setShowPay] = useState(false);
   const [showLead, setShowLead] = useState(false);
   const [lead, setLead] = useState({ name: result.name, phone: result.phone });
+  const deepEligible = ["Student", "IT Employee", "Working Professional"].includes(result.user_type);
 
   const startUnlock = () => { track("cta_click", { location: "unlock", plan }); setShowLead(true); };
   const onLeadContinue = (info) => {
@@ -31,10 +33,23 @@ export const ResultPreview = ({ result, onBack }) => {
     setShowLead(false);
     setShowPay(true);
   };
-  const onSuccess = (rep) => {
+  const onSuccess = async (rep) => {
     setReport(rep); setPaid(true); setShowPay(false);
     track("purchase", { plan, value: plan === "professional" ? 499 : 199, currency: "INR" });
     window.scrollTo({ top: 0, behavior: "smooth" });
+    if (!deepEligible) return;
+    setGenerating(true);
+    try {
+      const kick = await generateDeep(submission_id);
+      if (kick?.status === "done" && kick.report) { setReport(kick.report); setGenerating(false); return; }
+      // Poll until the background blueprint is ready (max ~3.5 min).
+      for (let i = 0; i < 52; i++) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const st = await deepStatus(submission_id);
+        if (st?.status === "done") { if (st.report) setReport(st.report); break; }
+      }
+    } catch (e) { /* keep base report on failure */ }
+    finally { setGenerating(false); }
   };
 
   return (
@@ -51,13 +66,53 @@ export const ResultPreview = ({ result, onBack }) => {
         {!paid && <PreviewScores scores={preview.scores} />}
 
         {paid && report
-          ? <FullReport report={report} submissionId={submission_id} isPro={isPro} name={lead.name} email={result.email} phone={lead.phone} />
+          ? (generating
+              ? <BuildingBlueprint />
+              : <FullReport report={report} submissionId={submission_id} isPro={isPro} name={lead.name} email={result.email} phone={lead.phone} />)
           : <LockedSection plan={plan} summary={preview.summary} onUnlock={startUnlock} />}
       </div>
 
       {showLead && <LeadGate defaultName={result.name} defaultDegree={result.answers?.current_degree || result.answers?.stream || ""} userType={result.user_type}
         onClose={() => setShowLead(false)} onContinue={onLeadContinue} />}
       {showPay && <PaymentModal submissionId={submission_id} name={lead.name || "You"} email={result.email} phone={lead.phone} onClose={() => setShowPay(false)} onSuccess={onSuccess} />}
+    </div>
+  );
+};
+
+const BUILD_STEPS = [
+  "Analyzing your profile & goal…",
+  "Mapping your market position & career DNA…",
+  "Designing your detailed learning syllabus…",
+  "Writing your 30 / 90 / 365-day execution plan…",
+  "Curating projects, tools & networking strategy…",
+  "Finalizing your premium blueprint…",
+];
+
+const BuildingBlueprint = () => {
+  const [step, setStep] = useState(0);
+  React.useEffect(() => {
+    const t = setInterval(() => setStep((s) => Math.min(s + 1, BUILD_STEPS.length - 1)), 6000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="rounded-[2rem] glass-card p-10 sm:p-14 text-center" data-testid="building-blueprint">
+      <div className="w-16 h-16 rounded-2xl grad-primary flex items-center justify-center mx-auto mb-6 glow-primary">
+        <Icons.Loader2 className="w-8 h-8 text-white animate-spin" strokeWidth={2} />
+      </div>
+      <h3 className="font-head font-800 text-2xl sm:text-3xl text-slate-900 mb-2">Building your 16–20 page blueprint</h3>
+      <p className="text-slate-500 mb-8 max-w-md mx-auto">Our AI strategist is writing a deeply personalized report just for you. This takes up to a minute — please don't close this page.</p>
+      <div className="max-w-sm mx-auto space-y-3 text-left">
+        {BUILD_STEPS.map((s, i) => (
+          <div key={i} className="flex items-center gap-3" data-testid={`build-step-${i}`}>
+            {i < step
+              ? <Icons.CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+              : i === step
+                ? <Icons.Loader2 className="w-5 h-5 text-purple-500 shrink-0 animate-spin" />
+                : <Icons.Circle className="w-5 h-5 text-slate-300 shrink-0" />}
+            <span className={`text-sm ${i <= step ? "text-slate-700" : "text-slate-400"}`}>{s}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

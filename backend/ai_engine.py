@@ -55,7 +55,7 @@ def _summary(profile: Dict[str, Any], report: Dict[str, Any]) -> str:
 
 async def enhance(profile: Dict[str, Any], report: Dict[str, Any]) -> Dict[str, Any]:
     """Rewrite the AI-eligible prose blocks in-place. Safe no-op on any failure."""
-    if not EMERGENT_LLM_KEY:
+    if not os.environ.get("EMERGENT_LLM_KEY"):
         return report
 
     wants = [s["id"] for s in report.get("sections", []) if s.get("id") in AI_FIELDS and "text" in s]
@@ -77,7 +77,7 @@ async def enhance(profile: Dict[str, Any], report: Dict[str, Any]) -> Dict[str, 
 
     try:
         from emergentintegrations.llm.chat import LlmChat, UserMessage
-        chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=f"cb-{profile.get('name','u')}-{report.get('user_type')}",
+        chat = LlmChat(api_key=os.environ.get("EMERGENT_LLM_KEY"), session_id=f"cb-{profile.get('name','u')}-{report.get('user_type')}",
                        system_message=SYSTEM).with_model("anthropic", "claude-sonnet-4-6")
         resp = await asyncio.wait_for(chat.send_message(UserMessage(text=prompt)), timeout=28)
         data = _extract_json(resp if isinstance(resp, str) else str(resp))

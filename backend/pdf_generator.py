@@ -267,6 +267,46 @@ def _section_block(e, s, st, cw):
             e.append(_card(parts, cw))
             e.append(Spacer(1, 3 * mm))
 
+    elif stype == "table":
+        if s.get("intro"):
+            e.append(Paragraph(s["intro"], st["body"]))
+            e.append(Spacer(1, 2 * mm))
+        headers = s.get("headers", [])
+        rows = s.get("rows", [])
+        hdr_style = ParagraphStyle("th", fontName="Helvetica-Bold", fontSize=8.5, textColor=WHITE, leading=11)
+        cell_style = ParagraphStyle("td", fontName="Helvetica", fontSize=8.5, textColor=SLATE, leading=11)
+        data_rows = [[Paragraph(str(h), hdr_style) for h in headers]]
+        for row in rows:
+            data_rows.append([Paragraph(str(c), cell_style) for c in row])
+        ncol = max(1, len(headers))
+        t = Table(data_rows, colWidths=[cw / ncol] * ncol, repeatRows=1)
+        t.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), INDIGO),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, CARD]),
+            ("BOX", (0, 0), (-1, -1), 0.6, CARD_BORDER),
+            ("LINEBELOW", (0, 0), (-1, -1), 0.4, TRACK),
+            ("LEFTPADDING", (0, 0), (-1, -1), 6), ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+            ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ]))
+        e.append(t)
+
+    elif stype == "timeline":
+        if s.get("intro"):
+            e.append(Paragraph(s["intro"], st["body"]))
+            e.append(Spacer(1, 2 * mm))
+        for it in s.get("items", []):
+            label = it.get("label", "")
+            title = it.get("title", "")
+            text = it.get("text", "")
+            head = f"<font color='#7C3AED'><b>{label}</b></font>"
+            if title:
+                head += f" &nbsp;<b>{title}</b>"
+            e.append(Paragraph(head + (f" — {text}" if text else ""), st["small"]))
+            for pt in it.get("points", []):
+                e.append(Paragraph(f"&nbsp;&nbsp;&bull;&nbsp;{pt}", st["small"]))
+            e.append(Spacer(1, 1.8 * mm))
+
     e.append(Spacer(1, 6 * mm))
 
 

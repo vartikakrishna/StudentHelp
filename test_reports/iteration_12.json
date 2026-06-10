@@ -1,0 +1,38 @@
+{
+  "summary": "Full end-to-end Student deep-report (16-20 page Career Transformation Blueprint) flow validated successfully on https://career-blueprint-ai.preview.emergentagent.com. Funnel: hero-cta -> q-usertype-Student -> value screen -> About (TEST Aarav, email, phone) -> Academics (current_class=Class 9, 2 favorite_subjects) -> Aspirations (career_interests + dream_career='AI Engineer') -> Personality (5 binaries) -> Generate -> result-headline rendered ('TEST, your clearest career direction is ready.'). Unlock CTA -> LeadGate (name/whatsapp/degree=B.Tech CSE/lead-continue) -> PaymentModal (mock) -> Pay 199 Securely (pay-now-btn) -> building-blueprint loader appeared with all 6 animated steps (build-step-0..5). Deep generation completed in ~110-115s (well within ~3.5 min budget). full-report rendered with 29 report sections, 75,785 chars of personalized content. NEW premium block types confirmed: table-skill_gap (1 TableBlock) and 3 timelines (timeline-plan_30, timeline-plan_90, timeline-plan_365). Keyword presence in full report: Executive Summary, Career DNA, Market Position, Skill Gap, Syllabus, Networking, Future Self, Project, Tool Stack, 30-Day, 90-Day, 365-Day, Brand - ALL TRUE. Download PDF button (download-pdf-btn) present with href /api/report/<id>/pdf; verified PDF endpoint returns HTTP 200, content-type application/pdf, 90209 bytes, valid %PDF-1.4 magic header. ZERO React/console errors throughout the full ~3 minute flow.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_11.json"
+  ],
+  "action_items": [
+    "After test sign-off, restore PAYMENT_MODE from 'mock' to live in backend/.env so real Razorpay flow resumes.",
+    "(Optional) Consider rendering more than one TableBlock - currently only table-skill_gap renders (one table). The PRD mentions Skill Gap Analysis as a TABLE which is satisfied, but other tabular sections (e.g. Tool Stack, Financial Prep, Cold Message Templates) could also benefit from the new TableBlock for consistency."
+  ],
+  "critical_code_review_comments": [
+    "ResultPreview.jsx onSuccess() swallows deep-generation polling errors with empty catch (line 51) - if /api/generate-deep/{id}/status repeatedly 5xxs the user silently stays on the base report after timeout without any error toast. Consider toast.error on persistent failure or a 'Retry' button on the BuildingBlueprint after timeout.",
+    "ResultPreview.jsx BuildingBlueprint copy says 'This takes up to a minute' but actual generation took ~110s and the frontend polls up to 3.5 min - consider updating microcopy to '1-3 minutes' to match real backend latency and prevent user abandonment.",
+    "ResultPreview.jsx polling interval is fixed at 4s for 52 iterations (~3.5min). Consider exponential backoff or server-sent events to reduce backend load when many concurrent users generate deep reports.",
+    "ReportRenderer.jsx (267 lines) is approaching readability limits; section block components (TableBlock, Timeline, BlueprintPhases, Recommendations, etc.) could be split into a sections/blocks/ subfolder for clarity."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "skipped per request (PDF endpoint spot-checked HTTP 200 application/pdf)", "frontend": "100%"},
+  "test_credentials": "None - no auth. PAYMENT_MODE=mock (intentional for this test).",
+  "seed_data_creation": "Created 1 TEST_ submission (id e98c2283-c045-4098-9e92-407a464cc711) via /api/analyze + 1 mock /verify-payment + 1 deep report via /api/generate-deep during the E2E run. No production data touched.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Deep-report (Career Transformation Blueprint) flow validated end-to-end for Student type. Key data-testids confirmed working: landing, hero-cta, q-usertype-Student, q-name, q-email, q-phone, q-current_class, q-favorite_subjects-<subject>, q-career_interests-<interest>, q-dream_career, q-personality-{mind|approach|risk|work_style|structure}-{value}, questionnaire-next-btn, result-headline, unlock-premium-btn, lead-name, lead-whatsapp, lead-degree, lead-continue, pay-now-btn, building-blueprint, build-step-0..5, full-report, table-skill_gap, timeline-plan_30, timeline-plan_90, timeline-plan_365, report-section-* (29 sections rendered), download-pdf-btn. Deep generation (Claude ~11 parallel calls) completes reliably in ~110-115s. PDF endpoint /api/report/<id>/pdf returns 200 application/pdf with valid %PDF-1.4 magic. 0 console errors. NOTE: when fetching backend URLs from python urllib in the preview env, set a real User-Agent header (e.g. Mozilla/5.0) - default python-urllib UA triggers Cloudflare 403; this is environment-only and does NOT affect real users.",
+  "validated_e2e_flows": [
+    "Landing -> hero-cta -> Student questionnaire (usertype/value/about/academics/aspirations/personality) -> Generate -> result-headline",
+    "Result preview -> unlock-premium-btn -> LeadGate (lead-name/whatsapp/degree/continue) -> PaymentModal (mock) -> pay-now-btn (Pay 199 Securely)",
+    "Post-payment -> building-blueprint loader with 6 animated steps -> ~110s deep AI generation -> full-report renders with 29 sections, ~75k chars",
+    "New premium blocks render: TableBlock (table-skill_gap) and 3 Timelines (timeline-plan_30/90/365)",
+    "All 22+ premium section keywords present: Executive Summary, Career DNA, Market Position, Skill Gap, Syllabus, Networking, Future Self letter, Projects, Tool Stack, 30/90/365-Day plans, Personal Brand",
+    "Download PDF endpoint returns HTTP 200 application/pdf (90KB, valid PDF)",
+    "Zero React/console errors across the entire ~3 minute flow"
+  ]
+}
